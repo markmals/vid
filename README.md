@@ -8,6 +8,16 @@
 - Building from source requires Swift 6.4.
 - The Swift package supports macOS 13 or later and Linux.
 
+## Install with Homebrew
+
+```sh
+brew install markmals/tap/vid
+```
+
+On macOS, Homebrew installs FFmpeg with `vid`. On Linux, the formula intentionally leaves FFmpeg unmanaged and uses the `ffmpeg` and `ffprobe` already on `PATH`, preserving custom builds with codecs such as H.264 and HEVC.
+
+## Build from source
+
 Build and run the executable locally:
 
 ```sh
