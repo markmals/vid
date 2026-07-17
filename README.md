@@ -137,9 +137,9 @@ Options specific to `remux`:
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `--subtitles <text|extract|none>` | `text` | Select subtitle handling |
+| `--subtitles` (`text`, `extract`, or `none`) | `text` | Select subtitle handling |
 | `--apple-compatible` | Off | Apply HEVC and Dolby codec tags used by Apple software |
-| `--audio-codec <copy|eac3|aac>` | `copy` | Select audio handling |
+| `--audio-codec` (`copy`, `eac3`, or `aac`) | `copy` | Select audio handling |
 | `--audio-bitrate <bitrate>` | `320k` | Set bitrate when encoding audio |
 
 Apple compatibility sets the HEVC video tag to `hvc1`, inserts HEVC access-unit delimiters, tags copied AC-3/E-AC-3 audio correctly, and enables MP4 fast start.
@@ -159,8 +159,8 @@ Options specific to `tag`:
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `--subtitles <extract|text|none>` | `extract` | Select subtitle handling |
-| `--audio-codec <copy|eac3|aac>` | `copy` | Copy or encode audio |
+| `--subtitles` (`extract`, `text`, or `none`) | `extract` | Select subtitle handling |
+| `--audio-codec` (`copy`, `eac3`, or `aac`) | `copy` | Copy or encode audio |
 | `--audio-bitrate <bitrate>` | `320k` | Set bitrate when encoding audio |
 
 For HEVC input, `tag` applies `hvc1` and inserts access-unit delimiters. It also applies `ac-3` or `ec-3` tags to matching audio and enables MP4 fast start.
@@ -180,8 +180,8 @@ Options specific to `encode`:
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `--subtitles <extract|text|none>` | `extract` | Select subtitle handling |
-| `--audio-codec <eac3|aac|copy>` | `eac3` | Select audio handling |
+| `--subtitles` (`extract`, `text`, or `none`) | `extract` | Select subtitle handling |
+| `--audio-codec` (`eac3`, `aac`, or `copy`) | `eac3` | Select audio handling |
 | `--audio-bitrate <bitrate>` | `320k` | Set bitrate when encoding audio |
 | `--crf <0...51>` | `23` | Set the libx265 constant rate factor; lower values retain more quality and produce larger files |
 | `--preset <preset>` | `medium` | Set the libx265 encoding preset |
