@@ -35,30 +35,8 @@ jobs:
 
       - name: Build universal macOS binary
         run: |
-          mise run build:release -- \
-            --product vid \
-            --triple arm64-apple-macosx13.0 \
-            --scratch-path .build/release-arm64
-          mise run build:release -- \
-            --product vid \
-            --triple x86_64-apple-macosx13.0 \
-            --scratch-path .build/release-x86_64
-
-          arm64_bin=$(mise run build:release -- \
-            --product vid \
-            --triple arm64-apple-macosx13.0 \
-            --scratch-path .build/release-arm64 \
-            --show-bin-path)
-          x86_64_bin=$(mise run build:release -- \
-            --product vid \
-            --triple x86_64-apple-macosx13.0 \
-            --scratch-path .build/release-x86_64 \
-            --show-bin-path)
-
-          mkdir -p staging/macos artifacts
-          lipo -create "$arm64_bin/vid" "$x86_64_bin/vid" -output staging/macos/vid
-          strip -x staging/macos/vid
-          staging/macos/vid --version
+          mise run build:release:macos
+          mkdir -p artifacts
           tar -C staging/macos -czf "artifacts/vid-${GITHUB_REF_NAME}-macos-universal.tar.gz" vid
 
       - uses: actions/upload-artifact@v7
@@ -80,38 +58,12 @@ jobs:
           cache: true
 
       - name: Install matching Static Linux SDK
-        run: |
-          swift sdk install \
-            https://download.swift.org/swift-6.3.3-release/static-sdk/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz \
-            --checksum 87c3eaf908e67c0e13a84367119e12273cec1d2cd3d81f7d74bb36722d6b607b
-          swift sdk list
+        run: mise run sdk:install:linux
 
       - name: Build static Linux binaries
         run: |
-          mise run build:release -- \
-            --product vid \
-            --swift-sdk x86_64-swift-linux-musl \
-            --scratch-path .build/release-linux-x86_64
-          mise run build:release -- \
-            --product vid \
-            --swift-sdk aarch64-swift-linux-musl \
-            --scratch-path .build/release-linux-aarch64
-
-          x86_64_bin=$(mise run build:release -- \
-            --product vid \
-            --swift-sdk x86_64-swift-linux-musl \
-            --scratch-path .build/release-linux-x86_64 \
-            --show-bin-path)
-          aarch64_bin=$(mise run build:release -- \
-            --product vid \
-            --swift-sdk aarch64-swift-linux-musl \
-            --scratch-path .build/release-linux-aarch64 \
-            --show-bin-path)
-
-          mkdir -p staging/linux-x86_64 staging/linux-aarch64 artifacts
-          llvm_objcopy="$(mise where swift)/usr/bin/llvm-objcopy"
-          "$llvm_objcopy" --strip-all "$x86_64_bin/vid" staging/linux-x86_64/vid
-          "$llvm_objcopy" --strip-all "$aarch64_bin/vid" staging/linux-aarch64/vid
+          mise run build:release:linux
+          mkdir -p artifacts
           tar -C staging/linux-x86_64 -czf "artifacts/vid-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" vid
           tar -C staging/linux-aarch64 -czf "artifacts/vid-${GITHUB_REF_NAME}-linux-aarch64.tar.gz" vid
 

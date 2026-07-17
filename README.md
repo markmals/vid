@@ -36,6 +36,25 @@ mise run lint
 mise run format
 ```
 
+Target-specific release tasks encode the product, target triple or Swift SDK, and scratch path:
+
+```sh
+mise run build:release:macos:arm64
+mise run build:release:macos:x86_64
+mise run build:release:linux:arm64
+mise run build:release:linux:x86_64
+```
+
+The aggregate tasks also stage the resulting binaries:
+
+```sh
+mise run build:release:macos # staging/macos/vid
+mise run build:release:linux # staging/linux-{aarch64,x86_64}/vid
+mise run build:all           # all of the above
+```
+
+Cross-platform and universal builds require macOS. The Linux tasks install the matching Static Linux SDK when needed.
+
 ## Command overview
 
 ```text

@@ -11,6 +11,67 @@ description = "Build the optimized CLI"
 raw_args = true
 run = "swift build -c release"
 
+[tasks."sdk:install:linux"]
+description = "Install the matching Static Linux SDK"
+run = '''
+sdk="swift-6.3.3-RELEASE_static-linux-0.1.0"
+if ! swift sdk list | grep -qx "$sdk"; then
+  swift sdk install \
+    https://download.swift.org/swift-6.3.3-release/static-sdk/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz \
+    --checksum 87c3eaf908e67c0e13a84367119e12273cec1d2cd3d81f7d74bb36722d6b607b
+fi
+'''
+
+[tasks."build:release:macos:arm64"]
+description = "Build the arm64 macOS release"
+raw_args = true
+run = "swift build -c release --product vid --triple arm64-apple-macosx13.0 --scratch-path .build/release-arm64"
+
+[tasks."build:release:macos:x86_64"]
+description = "Build the x86_64 macOS release"
+raw_args = true
+run = "swift build -c release --product vid --triple x86_64-apple-macosx13.0 --scratch-path .build/release-x86_64"
+
+[tasks."build:release:macos"]
+description = "Build the universal macOS release"
+depends = ["build:release:macos:arm64", "build:release:macos:x86_64"]
+run = '''
+arm64_bin="$(mise run build:release:macos:arm64 -- --show-bin-path)"
+x86_64_bin="$(mise run build:release:macos:x86_64 -- --show-bin-path)"
+mkdir -p staging/macos
+lipo -create "$arm64_bin/vid" "$x86_64_bin/vid" -output staging/macos/vid
+strip -x staging/macos/vid
+staging/macos/vid --version
+'''
+
+[tasks."build:release:linux:x86_64"]
+description = "Build the x86_64 static Linux release"
+depends = ["sdk:install:linux"]
+raw_args = true
+run = "swift build -c release --product vid --swift-sdk x86_64-swift-linux-musl --scratch-path .build/release-linux-x86_64"
+
+[tasks."build:release:linux:arm64"]
+description = "Build the arm64 static Linux release"
+depends = ["sdk:install:linux"]
+raw_args = true
+run = "swift build -c release --product vid --swift-sdk aarch64-swift-linux-musl --scratch-path .build/release-linux-aarch64"
+
+[tasks."build:release:linux"]
+description = "Build the static Linux releases"
+depends = ["build:release:linux:x86_64", "build:release:linux:arm64"]
+run = '''
+x86_64_bin="$(mise run build:release:linux:x86_64 -- --show-bin-path)"
+arm64_bin="$(mise run build:release:linux:arm64 -- --show-bin-path)"
+mkdir -p staging/linux-x86_64 staging/linux-aarch64
+llvm_objcopy="$(mise where swift)/usr/bin/llvm-objcopy"
+"$llvm_objcopy" --strip-all "$x86_64_bin/vid" staging/linux-x86_64/vid
+"$llvm_objcopy" --strip-all "$arm64_bin/vid" staging/linux-aarch64/vid
+'''
+
+[tasks."build:all"]
+description = "Build all macOS and Linux release binaries"
+depends = ["build:release:macos", "build:release:linux"]
+
 [tasks.run]
 description = "Build and run the CLI"
 raw_args = true

@@ -35,6 +35,10 @@ Not all of these libraries need to be used if they are not necessary for the fun
 - Install toolchain: `mise install`
 - Build: `mise run build`
 - Build for release: `mise run build:release`
+- Build one release target: `mise run build:release:<platform>:<architecture>`
+- Build universal macOS release: `mise run build:release:macos`
+- Build static Linux releases: `mise run build:release:linux`
+- Build every release target: `mise run build:all`
 - Run: `mise run run -- <arguments>`
 - Format: `mise run format`
 - Lint: `mise run lint`
