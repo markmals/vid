@@ -1,2 +1,30 @@
 [tools]
 swift = "6.3.3"
+
+[tasks.build]
+description = "Build the CLI for development"
+raw_args = true
+run = "swift build"
+
+[tasks."build:release"]
+description = "Build the optimized CLI"
+raw_args = true
+run = "swift build -c release"
+
+[tasks.run]
+description = "Build and run the CLI"
+raw_args = true
+run = "swift run vid"
+
+[tasks.test]
+description = "Run the test suite"
+raw_args = true
+run = "swift test"
+
+[tasks.format]
+description = "Format Swift sources and tests"
+run = "swift format --in-place --recursive Sources Tests"
+
+[tasks.lint]
+description = "Lint Swift sources and tests"
+run = "swift format lint --recursive Sources Tests"

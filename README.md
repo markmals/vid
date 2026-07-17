@@ -22,14 +22,18 @@ Install the pinned toolchain, then build and run the executable locally:
 
 ```sh
 mise install
-mise exec -- swift build -c release
+mise run build:release
 .build/release/vid --help
 ```
 
-During development, Swift Package Manager can build and run it in one command:
+Common development commands are exposed as Mise tasks:
 
 ```sh
-mise exec -- swift run vid --help
+mise run build
+mise run run -- --help
+mise run test
+mise run lint
+mise run format
 ```
 
 ## Command overview
