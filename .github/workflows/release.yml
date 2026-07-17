@@ -14,29 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Select Xcode 26
-        run: |
-          xcode_path=$(find /Applications -maxdepth 1 -name 'Xcode_26*.app' | sort -V | tail -1)
-          if [[ -z "$xcode_path" ]]; then
-            echo "No Xcode 26 installation found" >&2
-            exit 1
-          fi
-          sudo xcode-select -s "$xcode_path/Contents/Developer"
-          swift --version
-
-      - name: Install matching open-source Swift toolchain
-        run: |
-          curl --fail --location --output swiftly.pkg \
-            https://download.swift.org/swiftly/darwin/swiftly-1.1.2.pkg
-          installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
-          ~/.swiftly/bin/swiftly init \
-            --skip-install \
-            --no-modify-profile \
-            --quiet-shell-followup \
-            --assume-yes
-          ~/.swiftly/bin/swiftly install --use --assume-yes
-          echo "$HOME/.swiftly/bin" >> "$GITHUB_PATH"
-          ~/.swiftly/bin/swift --version
+      - name: Install Mise toolchain
+        uses: jdx/mise-action@v3
+        with:
+          version: 2026.7.7
+          install: true
+          cache: true
 
       - name: Verify tag version
         run: |
@@ -93,29 +76,23 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Install matching open-source Swift toolchain
-        run: |
-          curl --fail --location --output swiftly.pkg \
-            https://download.swift.org/swiftly/darwin/swiftly-1.1.2.pkg
-          installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
-          ~/.swiftly/bin/swiftly init \
-            --skip-install \
-            --no-modify-profile \
-            --quiet-shell-followup \
-            --assume-yes
-          ~/.swiftly/bin/swiftly install --use --assume-yes
-          ~/.swiftly/bin/swift --version
+      - name: Install Mise toolchain
+        uses: jdx/mise-action@v3
+        with:
+          version: 2026.7.7
+          install: true
+          cache: true
 
       - name: Install matching Static Linux SDK
         run: |
-          ~/.swiftly/bin/swift sdk install \
-            https://download.swift.org/swift-6.4.x-branch/static-sdk/swift-6.4.x-DEVELOPMENT-SNAPSHOT-2026-07-14-a/swift-6.4.x-DEVELOPMENT-SNAPSHOT-2026-07-14-a_static-linux-0.1.0.artifactbundle.tar.gz \
-            --checksum 41c7a53351a8dbcc8612038522d192561c61c3793ee25aa66406879e369b5330
-          ~/.swiftly/bin/swift sdk list
+          swift sdk install \
+            https://download.swift.org/swift-6.3.3-release/static-sdk/swift-6.3.3-RELEASE/swift-6.3.3-RELEASE_static-linux-0.1.0.artifactbundle.tar.gz \
+            --checksum 87c3eaf908e67c0e13a84367119e12273cec1d2cd3d81f7d74bb36722d6b607b
+          swift sdk list
 
       - name: Build static Linux binaries
         run: |
-          swift=~/.swiftly/bin/swift
+          swift="$(mise which swift)"
           "$swift" build \
             -c release \
             --product vid \
@@ -141,8 +118,9 @@ jobs:
             --show-bin-path)
 
           mkdir -p staging/linux-x86_64 staging/linux-aarch64 artifacts
-          ~/.swiftly/bin/llvm-objcopy --strip-all "$x86_64_bin/vid" staging/linux-x86_64/vid
-          ~/.swiftly/bin/llvm-objcopy --strip-all "$aarch64_bin/vid" staging/linux-aarch64/vid
+          llvm_objcopy="$(mise where swift)/usr/bin/llvm-objcopy"
+          "$llvm_objcopy" --strip-all "$x86_64_bin/vid" staging/linux-x86_64/vid
+          "$llvm_objcopy" --strip-all "$aarch64_bin/vid" staging/linux-aarch64/vid
           tar -C staging/linux-x86_64 -czf "artifacts/vid-${GITHUB_REF_NAME}-linux-x86_64.tar.gz" vid
           tar -C staging/linux-aarch64 -czf "artifacts/vid-${GITHUB_REF_NAME}-linux-aarch64.tar.gz" vid
 

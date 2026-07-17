@@ -10,7 +10,7 @@
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.expand": false,
     "explorer.fileNesting.patterns": {
-        "Package.swift": ".swift-format, Package.resolved, .swift-version"
+        "Package.swift": ".swift-format, Package.resolved"
     },
     "files.exclude": {
         "**/.build": true,

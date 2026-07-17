@@ -5,7 +5,7 @@
 ## Requirements
 
 - `ffmpeg` and `ffprobe` must be installed and available on `PATH`.
-- Building from source requires Swift 6.4.
+- Building from source requires [Mise](https://mise.jdx.dev/); `mise install` provisions the pinned Swift toolchain.
 - The Swift package supports macOS 13 or later and Linux.
 
 ## Install with Homebrew
@@ -18,17 +18,18 @@ On macOS, Homebrew installs FFmpeg with `vid`. On Linux, the formula intentional
 
 ## Build from source
 
-Build and run the executable locally:
+Install the pinned toolchain, then build and run the executable locally:
 
 ```sh
-swift build -c release
+mise install
+mise exec -- swift build -c release
 .build/release/vid --help
 ```
 
 During development, Swift Package Manager can build and run it in one command:
 
 ```sh
-swift run vid --help
+mise exec -- swift run vid --help
 ```
 
 ## Command overview

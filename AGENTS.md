@@ -32,7 +32,8 @@ Not all of these libraries need to be used if they are not necessary for the fun
 
 ## Tooling
 
-- Build: `swift build`
-- Format: `swift format --recursive <source-directory>`
-- Lint: `swift format lint --recursive <source-directory>`
-- Test: `swift test`
+- Install toolchain: `mise install`
+- Build: `mise exec -- swift build`
+- Format: `mise exec -- swift format --recursive <source-directory>`
+- Lint: `mise exec -- swift format lint --recursive <source-directory>`
+- Test: `mise exec -- swift test`
