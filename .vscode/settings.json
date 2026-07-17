@@ -1,0 +1,19 @@
+{
+    "editor.defaultFormatter": "swiftlang.swift-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+
+    "[swift]": {
+        "editor.defaultFormatter": "swiftlang.swift-vscode"
+    },
+
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.expand": false,
+    "explorer.fileNesting.patterns": {
+        "Package.swift": ".swift-format, Package.resolved"
+    },
+    "files.exclude": {
+        "**/.build": true,
+        "**/.swiftpm": true,
+    },
+}

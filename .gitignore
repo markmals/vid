@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+Thumbs.db
+*.png
+
+# Apple
+.derived-data/
+.build/
+Derived/
+xcuserdata/
+DerivedData/
+build/
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.schema
+
+# Logs and temp
+*.log
+*.pid
+*.tmp
+
+# Tests
+coverage/
