@@ -33,12 +33,12 @@ struct FileWorkflowTests {
         try Data("source".utf8).write(to: source)
         let transaction = try OutputTransaction(
             sourceURL: source,
-            operationName: "remuxed",
+            outputFilenameSuffix: "remuxed",
             policy: OutputPolicy(
                 outputDirectory: nil,
-                overwrite: false,
-                removeSource: true,
-                replace: false,
+                shouldOverwriteExistingOutput: false,
+                shouldRemoveSource: true,
+                shouldReplaceInput: false,
             ),
         )
         try Data("output".utf8).write(to: transaction.temporaryURL)
@@ -58,12 +58,12 @@ struct FileWorkflowTests {
         try Data("source".utf8).write(to: source)
         let transaction = try OutputTransaction(
             sourceURL: source,
-            operationName: "remuxed",
+            outputFilenameSuffix: "remuxed",
             policy: OutputPolicy(
                 outputDirectory: nil,
-                overwrite: false,
-                removeSource: true,
-                replace: false,
+                shouldOverwriteExistingOutput: false,
+                shouldRemoveSource: true,
+                shouldReplaceInput: false,
             ),
         )
         try Data().write(to: transaction.temporaryURL)
@@ -73,6 +73,32 @@ struct FileWorkflowTests {
         }
         #expect(FileManager.default.fileExists(atPath: source.path))
         #expect(!FileManager.default.fileExists(atPath: transaction.finalURL.path))
+    }
+
+    @Test("Adding subtitles to an MP4 uses the unambiguous collision suffix")
+    func subtitleOutputFilename() throws {
+        let directory = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let source = directory.appendingPathComponent("movie.mp4")
+        try Data("source".utf8).write(to: source)
+        let plan = AddSubtitlePlan(
+            subtitle: directory.appendingPathComponent("movie.srt"),
+            language: "eng",
+            title: "ENG",
+        )
+        let transaction = try OutputTransaction(
+            sourceURL: source,
+            outputFilenameSuffix: plan.outputFilenameSuffix,
+            policy: OutputPolicy(
+                outputDirectory: nil,
+                shouldOverwriteExistingOutput: false,
+                shouldRemoveSource: false,
+                shouldReplaceInput: false,
+            ),
+        )
+
+        #expect(transaction.finalURL.lastPathComponent == "movie.subtitled.mp4")
     }
 
     private func temporaryDirectory() throws -> URL {

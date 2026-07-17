@@ -1,15 +1,29 @@
 import Foundation
 
+/// Discovers media files beneath user-supplied file and directory paths.
 struct InputDiscovery: Sendable {
+    /// Collects the media files addressed by the supplied paths.
+    ///
+    /// Each path is resolved to an absolute URL. A path referring to a directory
+    /// contributes its contained media files (optionally recursing); a path
+    /// referring to a file contributes that file directly. Duplicate files are
+    /// collapsed by resolved path.
+    /// - Parameters:
+    ///   - paths: The raw file or directory paths to search.
+    ///   - recursive: Whether directory paths are searched recursively.
+    /// - Returns: The discovered media file URLs, sorted ascending by path using
+    ///   a localized standard comparison.
+    /// - Throws: ``VidError/fileDoesNotExist(path:)`` if a supplied path does not
+    ///   exist, or ``VidError/noInputFiles`` if no media files are found.
     func mediaFiles(at paths: [String], recursive: Bool) throws -> [URL] {
         var filesByPath: [String: URL] = [:]
 
         for path in paths {
-            let input = FilePathResolver.resolve(path)
+            let input = FilePathResolver.resolvedURL(for: path)
             var isDirectory: ObjCBool = false
             guard FileManager.default.fileExists(atPath: input.path, isDirectory: &isDirectory)
             else {
-                throw VidError.fileDoesNotExist(path)
+                throw VidError.fileDoesNotExist(path: path)
             }
 
             if isDirectory.boolValue {

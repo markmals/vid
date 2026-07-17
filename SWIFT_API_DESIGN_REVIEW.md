@@ -1,6 +1,43 @@
 # SWIFT API DESIGN REVIEW — `vid`
 
-## Scope
+## Current status
+
+**CONFORMING — remediation verified on 2026-07-17.**
+
+This document preserves the original audit as a remediation record. Symbols,
+line references, classifications, and baseline results in the sections below
+describe commit `611e2b4`, before the implementation pass.
+
+The current tree:
+
+- gives every Boolean property an assertive name while pinning the existing CLI
+  flag spellings explicitly;
+- uses grammatical, behavior-accurate names for video lookup, subtitle output
+  options, subprocess output, path resolution, and filename suffixes;
+- labels path-bearing error values by role and distinguishes an incompatible
+  output policy from an invalid path;
+- distinguishes authored `MediaOperationPlan` values from compiled
+  `FFmpegExecutionPlan` values and names the factory `makeExecutionPlan`;
+- establishes `makeOutputPolicy()` as a documented factory;
+- documents every explicit non-`private` production declaration and the
+  nonconstant computed-property complexity identified by D2; and
+- uses `subtitled` for MP4 subtitle-output collisions.
+
+Verification after remediation:
+
+- `swift build` and all 6 tests passed.
+- `swift format lint --recursive Sources Tests` passed.
+- LSP diagnostics reported no issues in `Sources` or `Tests`.
+- Generated help for the root command and all seven command/group surfaces was
+  byte-identical to the pre-rename baseline.
+- An end-to-end `vid subtitles add` smoke test created
+  `movie.subtitled.mp4` with a `mov_text` English subtitle stream.
+- The internal symbol graph emitted 250 symbols: 196 carried documentation;
+  the other 54 were synthesized initializer entries excluded from this review.
+- Independent API and documentation audits found no remaining violation,
+  documentation gap, or unresolved concern.
+
+## Original review scope
 
 - **Module and access levels:** executable module `vid`. No `public`, `open`, `package`, `internal`, or `fileprivate` modifiers occur in `Sources/vid`; every non-`private` production declaration therefore has implicit `internal` access. This review covers that complete internal production API because the requested scope is the application API, not only an exported library surface.
 - **Included files:** all 20 Swift files under `Sources/vid`, grouped under the root command, `CLI`, `Encode`, `Media`, `Remux`, `Repair`, and `Subtitles`.
@@ -10,7 +47,7 @@
 - **Guidelines source:** `.agents/skills/reviewing-swift-api-design/REFERENCE.md`, distilled from the [official Swift API Design Guidelines](https://swift.org/documentation/api-design-guidelines/).
 - **Domain precedent:** Swift Argument Parser command requirements and help-generation conventions; FFmpeg media terms and codec spellings used by the command-line domain.
 
-## Baseline
+## Original baseline
 
 - `swift build` — **PASS**. Establishes that declarations and call sites compile; it does not establish semantic naming or documentation quality.
 - `swift test` — **PASS**. Five tests across two suites passed; coverage establishes selected file-transaction and FFmpeg-plan behavior, not API-guideline conformance.
@@ -19,7 +56,7 @@
 - Documentation-comment search (`^\s*///|^\s*/\*\*`) — **PASS as inventory evidence**: zero documentation comments occur under `Sources/vid`. This establishes the documentation gaps below.
 - LSP symbol and reference inspection — **PASS** for the named use sites below. LSP establishes symbol relationships, not whether names are clear.
 
-## Violations
+## Remediated violations
 
 ### V1 — Boolean properties do not consistently read as assertions
 
@@ -122,7 +159,7 @@
 - **Change risk:** **Source-breaking** inside `vid`; behavior-preserving.
 - **Verification:** Implementation inspection at `FilePathResolver.swift:4-14` and five LSP-resolved references.
 
-## Documentation gaps
+## Remediated documentation gaps
 
 ### D1 — Every explicit internal production declaration lacks a documentation comment
 
@@ -148,7 +185,7 @@
 - **Change risk:** **Nonbreaking**.
 - **Verification:** implementation inspection at `MediaProbe.swift:6-24,54-56` and LSP references across all plan implementations.
 
-## Concerns
+## Resolved concerns
 
 ### C1 — `MediaPlan` and `MediaProcessingPlan` may not distinguish authored and compiled plans clearly enough
 
@@ -174,7 +211,7 @@
 - **Change risk:** **Source-breaking** for a rename; behavior-preserving.
 - **Verification:** implementation and seven LSP-resolved calls; no documentation supplies the missing semantic intent.
 
-## Non-issues checked
+## Non-issues preserved
 
 ### N1 — `MediaPlan` is correctly a noun protocol
 
@@ -260,16 +297,16 @@
 - **Change risk:** none.
 - **Verification:** conformances compile, generated help runs, and command declarations were inspected.
 
-## Tooling limits
+## Review limits
 
 - Build, tests, formatter lint, and generated help do not judge semantic naming, grammar, or documentation completeness.
-- The executable target exports no public library interface, so symbol graphs and API digester output would not represent the requested internal scope.
+- Internal symbol graphs support documentation inventory at `internal` access, but do not judge semantic naming; API digester output still would not represent this executable's requested internal source contract.
 - LSP references establish the observed callers only; future call sites and downstream source compatibility do not exist as a declared package contract.
-- The test suite covers five behavioral contracts, not every error case, flag combination, or subprocess failure mode.
+- The test suite covers six behavioral contracts, not every error case, flag combination, or subprocess failure mode.
 - Synthesized memberwise initializers were assessed through observed calls; they do not have separately written declarations to document.
 
 ## Verdict
 
-**NONCONFORMING** — 7 confirmed `VIOLATION` findings and 2 `DOCUMENTATION GAP` findings apply to the complete internal production scope. Two additional semantic naming questions remain `CONCERN`s. The highest-impact work is to document the internal API, make Boolean state assertive, clarify filename-suffix semantics, label weak path strings, and align helper names with their verified behavior.
+**CONFORMING** — V1–V7 and D1–D2 are remediated, C1–C2 are resolved with documented semantic choices, and N1–N7 remain valid. A fresh skeptical review found no residual API-guideline violation, documentation gap, or unresolved concern.
 
-This is a report-only review. No production declaration or call site was changed.
+The original audit was report-only. The remediation pass changed production declarations, every affected call site, tests, and this status record without leaving compatibility aliases or deprecated paths.

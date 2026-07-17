@@ -14,27 +14,27 @@ struct MediaPlanTests {
             stream(index: 3, codec: "hdmv_pgs_subtitle", type: "subtitle", language: "eng"),
         ])
         let plan = RemuxPlan(
-            operationName: "tagged",
+            outputFilenameSuffix: "tagged",
             settings: RemuxSettings(
-                appleCompatible: true,
+                isAppleCompatible: true,
                 audioEncoding: .copy,
                 subtitleHandling: .extractBitmap,
             ),
         )
 
-        let processingPlan = try plan.makeProcessingPlan(
+        let executionPlan = try plan.makeExecutionPlan(
             input: URL(fileURLWithPath: "/media/input.mkv"),
             output: URL(fileURLWithPath: "/media/output.mp4"),
             probe: probe,
         )
 
         #expect(
-            processingPlan.ffmpegArguments.containsSequence(["-bsf:v", "hevc_metadata=aud=insert"]))
-        #expect(processingPlan.ffmpegArguments.containsSequence(["-tag:v:0", "hvc1"]))
-        #expect(processingPlan.ffmpegArguments.containsSequence(["-tag:a:0", "ec-3"]))
-        #expect(processingPlan.ffmpegArguments.containsSequence(["-map", "0:2?"]))
-        #expect(!processingPlan.ffmpegArguments.containsSequence(["-map", "0:3?"]))
-        #expect(processingPlan.bitmapSubtitlesToExtract.map(\.index) == [3])
+            executionPlan.ffmpegArguments.containsSequence(["-bsf:v", "hevc_metadata=aud=insert"]))
+        #expect(executionPlan.ffmpegArguments.containsSequence(["-tag:v:0", "hvc1"]))
+        #expect(executionPlan.ffmpegArguments.containsSequence(["-tag:a:0", "ec-3"]))
+        #expect(executionPlan.ffmpegArguments.containsSequence(["-map", "0:2?"]))
+        #expect(!executionPlan.ffmpegArguments.containsSequence(["-map", "0:3?"]))
+        #expect(executionPlan.bitmapSubtitlesToExtract.map(\.index) == [3])
     }
 
     @Test("HEVC encoding excludes selected audio languages and normalizes defaults")
@@ -50,24 +50,24 @@ struct MediaPlanTests {
                 audioEncoding: .eac3(bitrate: "320k"),
                 crf: 23,
                 excludedAudioLanguages: ["rus"],
-                normalizeDispositions: true,
+                shouldNormalizeDispositions: true,
                 preset: "medium",
                 subtitleHandling: .textOnly,
             ),
         )
 
-        let processingPlan = try plan.makeProcessingPlan(
+        let executionPlan = try plan.makeExecutionPlan(
             input: URL(fileURLWithPath: "/media/input.mkv"),
             output: URL(fileURLWithPath: "/media/output.mp4"),
             probe: probe,
         )
 
-        #expect(processingPlan.ffmpegArguments.containsSequence(["-map", "0:1?"]))
-        #expect(!processingPlan.ffmpegArguments.containsSequence(["-map", "0:2?"]))
-        #expect(processingPlan.ffmpegArguments.containsSequence(["-c:v", "libx265"]))
-        #expect(processingPlan.ffmpegArguments.containsSequence(["-c:a", "eac3", "-b:a", "320k"]))
-        #expect(processingPlan.ffmpegArguments.containsSequence(["-disposition:a:0", "default"]))
-        #expect(processingPlan.ffmpegArguments.containsSequence(["-disposition:s:0", "default"]))
+        #expect(executionPlan.ffmpegArguments.containsSequence(["-map", "0:1?"]))
+        #expect(!executionPlan.ffmpegArguments.containsSequence(["-map", "0:2?"]))
+        #expect(executionPlan.ffmpegArguments.containsSequence(["-c:v", "libx265"]))
+        #expect(executionPlan.ffmpegArguments.containsSequence(["-c:a", "eac3", "-b:a", "320k"]))
+        #expect(executionPlan.ffmpegArguments.containsSequence(["-disposition:a:0", "default"]))
+        #expect(executionPlan.ffmpegArguments.containsSequence(["-disposition:s:0", "default"]))
     }
 
     private func stream(

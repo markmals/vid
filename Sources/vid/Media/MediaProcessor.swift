@@ -1,23 +1,54 @@
 import Foundation
 
-struct MediaProcessingPlan: Sendable {
+/// A compiled, concrete plan for running FFmpeg against a single input file.
+///
+/// It carries the exact FFmpeg arguments to invoke along with any bitmap
+/// subtitle streams that must be extracted to sidecar files.
+struct FFmpegExecutionPlan: Sendable {
+    /// The arguments to pass to the `ffmpeg` invocation.
     let ffmpegArguments: [String]
+    /// The bitmap subtitle streams to extract into sidecar files.
     let bitmapSubtitlesToExtract: [MediaStream]
 }
 
+/// Runs a ``MediaOperationPlan`` against an input file, probing it, invoking
+/// FFmpeg, extracting sidecar subtitles, and committing the output.
 struct MediaProcessor: Sendable {
+    /// The prober used to gather stream metadata for inputs.
     let prober: MediaProber
+    /// The tool runner used to invoke `ffmpeg`.
     let runner: ToolRunner
 
+    /// Creates a processor backed by the given tool runner.
+    ///
+    /// - Parameter runner: The tool runner used to invoke subprocesses; it also
+    ///   backs the internal ``MediaProber``.
     init(runner: ToolRunner = ToolRunner()) {
         self.runner = runner
         prober = MediaProber(runner: runner)
     }
 
+    /// Processes a single input file according to the supplied plan.
+    ///
+    /// The input is probed (unless a probe is supplied), an ``OutputTransaction``
+    /// resolves the destination, the plan is compiled to FFmpeg arguments, any
+    /// bitmap subtitle sidecars are extracted, FFmpeg is run, and all outputs
+    /// are committed. If any step fails, the temporary outputs are discarded and
+    /// the error is rethrown.
+    ///
+    /// - Parameters:
+    ///   - input: The source media file to process.
+    ///   - outputPolicy: The resolved output behavior for the operation.
+    ///   - plan: The operation plan describing the work to perform.
+    ///   - suppliedProbe: A pre-computed probe to reuse instead of probing
+    ///     `input` again.
+    /// - Returns: The URL of the committed output file.
+    /// - Throws: A ``VidError`` or filesystem/subprocess error if probing,
+    ///   output resolution, extraction, FFmpeg execution, or commit fails.
     func process(
         _ input: URL,
         outputPolicy: OutputPolicy,
-        plan: some MediaPlan,
+        plan: some MediaOperationPlan,
         probe suppliedProbe: MediaProbe? = nil,
     ) async throws -> URL {
         print("Processing \(input.path)")
@@ -31,26 +62,26 @@ struct MediaProcessor: Sendable {
 
         let output = try OutputTransaction(
             sourceURL: input,
-            operationName: plan.operationName,
+            outputFilenameSuffix: plan.outputFilenameSuffix,
             policy: outputPolicy,
         )
-        let processingPlan = try plan.makeProcessingPlan(
+        let executionPlan = try plan.makeExecutionPlan(
             input: input,
             output: output.temporaryURL,
             probe: probe,
         )
         let sidecars = try makeSidecars(
-            for: processingPlan.bitmapSubtitlesToExtract,
+            for: executionPlan.bitmapSubtitlesToExtract,
             input: input,
             outputDirectory: output.finalURL.deletingLastPathComponent(),
-            overwrite: outputPolicy.overwrite,
+            overwrite: outputPolicy.shouldOverwriteExistingOutput,
         )
 
         do {
             for sidecar in sidecars {
                 try await extract(sidecar, from: input)
             }
-            try await runner.stream("ffmpeg", arguments: processingPlan.ffmpegArguments)
+            try await runner.streamOutput(of: "ffmpeg", arguments: executionPlan.ffmpegArguments)
             try output.commit()
             for sidecar in sidecars {
                 try sidecar.commit()
@@ -71,8 +102,8 @@ struct MediaProcessor: Sendable {
     }
 
     private func extract(_ sidecar: SidecarTransaction, from input: URL) async throws {
-        try await runner.stream(
-            "ffmpeg",
+        try await runner.streamOutput(
+            of: "ffmpeg",
             arguments: [
                 "-hide_banner", "-nostdin", "-y",
                 "-probesize", "50M",
@@ -118,7 +149,7 @@ private struct SidecarTransaction: Sendable {
         let fileName = "\(baseName)_sub\(stream.index).\(stream.subtitleFileExtension)"
         finalURL = outputDirectory.appendingPathComponent(fileName)
         if FileManager.default.fileExists(atPath: finalURL.path), !overwrite {
-            throw VidError.outputExists(finalURL.path)
+            throw VidError.outputExists(path: finalURL.path)
         }
 
         let temporaryName =
@@ -146,7 +177,7 @@ private struct SidecarTransaction: Sendable {
     func ensureNonEmptyOutput() throws {
         let attributes = try FileManager.default.attributesOfItem(atPath: temporaryURL.path)
         guard let fileSize = attributes[.size] as? NSNumber, fileSize.int64Value > 0 else {
-            throw VidError.emptyOutput(temporaryURL.path)
+            throw VidError.emptyOutput(path: temporaryURL.path)
         }
     }
 }
