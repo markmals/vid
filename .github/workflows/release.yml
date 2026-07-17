@@ -24,6 +24,20 @@ jobs:
           sudo xcode-select -s "$xcode_path/Contents/Developer"
           swift --version
 
+      - name: Install matching open-source Swift toolchain
+        run: |
+          curl --fail --location --output swiftly.pkg \
+            https://download.swift.org/swiftly/darwin/swiftly-1.1.2.pkg
+          installer -pkg swiftly.pkg -target CurrentUserHomeDirectory
+          ~/.swiftly/bin/swiftly init \
+            --skip-install \
+            --no-modify-profile \
+            --quiet-shell-followup \
+            --assume-yes
+          ~/.swiftly/bin/swiftly install --use --assume-yes
+          echo "$HOME/.swiftly/bin" >> "$GITHUB_PATH"
+          ~/.swiftly/bin/swift --version
+
       - name: Verify tag version
         run: |
           expected_version="${GITHUB_REF_NAME#v}"
