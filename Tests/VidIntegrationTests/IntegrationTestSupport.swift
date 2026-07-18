@@ -1,6 +1,8 @@
 import Foundation
 
-@testable import vid
+@testable import CommandExecution
+@testable import FFprobe
+@testable import MediaProcessing
 
 struct RealMediaFixture {
     let directory: URL

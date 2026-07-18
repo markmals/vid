@@ -1,7 +1,12 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import CommandExecution
+@testable import FFmpeg
+@testable import FFprobe
+@testable import MediaProcessing
+@testable import MediaRemux
+@testable import MediaRepair
 
 @Suite("Media processor")
 struct MediaProcessorTests {
@@ -20,7 +25,9 @@ struct MediaProcessorTests {
                 printf 'generated' > "$output"
                 """,
         )
-        let processor = MediaProcessor(runner: ToolRunner(executablePaths: ["ffmpeg": ffmpeg.path]))
+        let processor = mediaProcessor(
+            runner: ToolRunner(executablePaths: ["ffmpeg": ffmpeg.path])
+        )
         let plan = RemuxPlan(
             outputFilenameSuffix: "remuxed",
             settings: RemuxSettings(
@@ -67,7 +74,7 @@ struct MediaProcessorTests {
             "ffmpeg": ffmpeg.path,
         ])
 
-        let output = try await MediaProcessor(runner: runner).process(
+        let output = try await mediaProcessor(runner: runner).process(
             input,
             outputPolicy: outputPolicy(),
             plan: RepairPlan(),
@@ -92,7 +99,9 @@ struct MediaProcessorTests {
                 esac
                 """,
         )
-        let processor = MediaProcessor(runner: ToolRunner(executablePaths: ["ffmpeg": ffmpeg.path]))
+        let processor = mediaProcessor(
+            runner: ToolRunner(executablePaths: ["ffmpeg": ffmpeg.path])
+        )
         let plan = RemuxPlan(
             outputFilenameSuffix: "remuxed",
             settings: RemuxSettings(
@@ -102,7 +111,7 @@ struct MediaProcessorTests {
             ),
         )
 
-        await #expect(throws: VidError.self) {
+        await #expect(throws: CommandExecutionError.self) {
             _ = try await processor.process(
                 input,
                 outputPolicy: outputPolicy(),
@@ -124,7 +133,7 @@ struct MediaProcessorTests {
             name: "ffmpeg-empty",
             script: "output=''; for argument do output=\"$argument\"; done; : > \"$output\"",
         )
-        let processor = MediaProcessor(
+        let processor = mediaProcessor(
             runner: ToolRunner(executablePaths: ["ffmpeg": emptyFFmpeg.path])
         )
         let plan = RemuxPlan(
@@ -136,7 +145,7 @@ struct MediaProcessorTests {
             ),
         )
 
-        await #expect(throws: VidError.self) {
+        await #expect(throws: MediaProcessingError.self) {
             _ = try await processor.process(
                 input,
                 outputPolicy: outputPolicy(),
@@ -149,10 +158,10 @@ struct MediaProcessorTests {
             name: "ffmpeg-extraction-failure",
             script: "exit 8",
         )
-        let failedExtractionProcessor = MediaProcessor(
+        let failedExtractionProcessor = mediaProcessor(
             runner: ToolRunner(executablePaths: ["ffmpeg": failedExtraction.path])
         )
-        await #expect(throws: VidError.self) {
+        await #expect(throws: CommandExecutionError.self) {
             _ = try await failedExtractionProcessor.process(
                 input,
                 outputPolicy: outputPolicy(),
@@ -165,7 +174,7 @@ struct MediaProcessorTests {
             directory.appendingPathComponent("sidecar_sub3.sup"),
             contents: "existing",
         )
-        await #expect(throws: VidError.self) {
+        await #expect(throws: MediaProcessingError.self) {
             _ = try await processor.process(
                 input,
                 outputPolicy: outputPolicy(),
@@ -200,7 +209,7 @@ struct MediaProcessorTests {
             ),
         )
 
-        _ = try await MediaProcessor(
+        _ = try await mediaProcessor(
             runner: ToolRunner(executablePaths: ["ffmpeg": ffmpeg.path])
         ).process(
             input,

@@ -1,4 +1,6 @@
 import ArgumentParser
+import MediaProcessing
+import MediaRepair
 
 /// Deinterlaces and re-encodes problematic videos as H.264/AAC MP4 files.
 struct RepairCommand: AsyncParsableCommand {

@@ -1,7 +1,8 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import CommandExecution
+@testable import FFprobe
 
 @Suite("Media probing")
 struct MediaProbeTests {
@@ -37,7 +38,7 @@ struct MediaProbeTests {
         #expect(!probe.streams[8].isBitmapSubtitle)
     }
 
-    @Test("Media prober decodes output and reports invalid probes")
+    @Test("Media prober decodes valid and audio-only output and reports invalid probes")
     func proberOutcomes() async throws {
         let directory = try makeTemporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -64,7 +65,7 @@ struct MediaProbeTests {
                 runner: ToolRunner(executablePaths: ["ffprobe": invalid.path])
             ).probe(input)
             Issue.record("Invalid JSON should fail")
-        } catch let error as VidError {
+        } catch let error as MediaProbeError {
             #expect(
                 error.errorDescription
                     == "ffprobe returned invalid media information for '\(input.path)'.")
@@ -76,13 +77,10 @@ struct MediaProbeTests {
             script:
                 "printf '%s\\n' '{\"streams\":[{\"index\":0,\"codec_name\":\"aac\",\"codec_type\":\"audio\"}]}'",
         )
-        do {
-            _ = try await MediaProber(
-                runner: ToolRunner(executablePaths: ["ffprobe": audioOnly.path])
-            ).probe(input)
-            Issue.record("An audio-only probe should fail")
-        } catch let error as VidError {
-            #expect(error.errorDescription == "'\(input.path)' does not contain a video stream.")
-        }
+        let audioProbe = try await MediaProber(
+            runner: ToolRunner(executablePaths: ["ffprobe": audioOnly.path])
+        ).probe(input)
+        #expect(audioProbe.firstVideoStream == nil)
+        #expect(audioProbe.audioStreams.map(\.codecName) == ["aac"])
     }
 }

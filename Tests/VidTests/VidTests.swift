@@ -1,7 +1,9 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import MediaDiscovery
+@testable import MediaProcessing
+@testable import MediaSubtitles
 
 @Suite("File workflows")
 struct FileWorkflowTests {
@@ -68,7 +70,7 @@ struct FileWorkflowTests {
         )
         try Data().write(to: transaction.temporaryURL)
 
-        #expect(throws: VidError.self) {
+        #expect(throws: MediaProcessingError.self) {
             try transaction.commit()
         }
         #expect(FileManager.default.fileExists(atPath: source.path))

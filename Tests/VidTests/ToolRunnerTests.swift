@@ -1,7 +1,10 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import CommandExecution
+@testable import FFprobe
+@testable import MediaDiscovery
+@testable import MediaProcessing
 
 @Suite("Tool execution")
 struct ToolRunnerTests {
@@ -55,14 +58,14 @@ struct ToolRunnerTests {
         do {
             _ = try await runner.captureOutput(of: "capture-failure", arguments: [])
             Issue.record("A failed captured process should throw")
-        } catch let error as VidError {
+        } catch let error as CommandExecutionError {
             #expect(error.errorDescription?.contains("diagnostic message") == true)
         }
 
         do {
             _ = try await runner.captureOutput(of: "capture-failure-empty", arguments: [])
             Issue.record("A failed process without stderr should throw")
-        } catch let error as VidError {
+        } catch let error as CommandExecutionError {
             #expect(error.errorDescription?.hasSuffix(".") == true)
         }
 
@@ -75,7 +78,7 @@ struct ToolRunnerTests {
         do {
             try await runner.streamOutput(of: "stream-failure", arguments: [])
             Issue.record("A failed streamed process should throw")
-        } catch let error as VidError {
+        } catch let error as CommandExecutionError {
             #expect(error.errorDescription?.contains("stream-failure") == true)
         }
     }
@@ -91,40 +94,48 @@ struct ToolRunnerTests {
 }
 
 @Suite("User-facing errors")
-struct VidErrorTests {
-    @Test("Every error has a specific description")
+struct ModuleErrorTests {
+    @Test("Every module error has a specific description")
     func descriptions() {
-        let cases: [(VidError, String)] = [
-            (.emptyOutput(path: "/empty"), "FFmpeg did not create a non-empty output at '/empty'."),
-            (.fileDoesNotExist(path: "/missing"), "No file or directory exists at '/missing'."),
-            (
-                .invalidOutputDirectory(path: "/file"),
-                "The output directory '/file' does not exist or is not a directory."
-            ),
-            (
-                .incompatibleOutputOptions(reason: "conflict"),
-                "Incompatible output options: conflict"
-            ),
-            (.noInputFiles, "No media files matched the supplied paths."),
-            (.noVideoStream(path: "/audio"), "'/audio' does not contain a video stream."),
-            (
-                .outputExists(path: "/output"),
-                "Output already exists at '/output'. Pass --overwrite to replace it."
-            ),
-            (
-                .processFailed(tool: "ffmpeg", status: "failed", diagnostic: "details"),
-                "ffmpeg failed: details"
-            ),
-            (.processFailed(tool: "ffmpeg", status: "failed", diagnostic: ""), "ffmpeg failed."),
-            (.processFailed(tool: "ffmpeg", status: "failed", diagnostic: nil), "ffmpeg failed."),
-            (
-                .unreadableProbe(path: "/probe"),
-                "ffprobe returned invalid media information for '/probe'."
-            ),
+        let descriptions: [String?] = [
+            MediaProcessingError.emptyOutput(path: "/empty").errorDescription,
+            MediaDiscoveryError.fileDoesNotExist(path: "/missing").errorDescription,
+            MediaProcessingError.invalidOutputDirectory(path: "/file").errorDescription,
+            MediaProcessingError.incompatibleOutputOptions(reason: "conflict").errorDescription,
+            MediaDiscoveryError.noInputFiles.errorDescription,
+            MediaProcessingError.noVideoStream(path: "/audio").errorDescription,
+            MediaProcessingError.outputExists(path: "/output").errorDescription,
+            CommandExecutionError(
+                tool: "ffmpeg",
+                status: "failed",
+                diagnostic: "details"
+            ).errorDescription,
+            CommandExecutionError(
+                tool: "ffmpeg",
+                status: "failed",
+                diagnostic: ""
+            ).errorDescription,
+            CommandExecutionError(
+                tool: "ffmpeg",
+                status: "failed",
+                diagnostic: nil
+            ).errorDescription,
+            MediaProbeError.unreadableProbe(path: "/probe").errorDescription,
+        ]
+        let expected: [String?] = [
+            "FFmpeg did not create a non-empty output at '/empty'.",
+            "No file or directory exists at '/missing'.",
+            "The output directory '/file' does not exist or is not a directory.",
+            "Incompatible output options: conflict",
+            "No media files matched the supplied paths.",
+            "'/audio' does not contain a video stream.",
+            "Output already exists at '/output'. Pass --overwrite to replace it.",
+            "ffmpeg failed: details",
+            "ffmpeg failed.",
+            "ffmpeg failed.",
+            "ffprobe returned invalid media information for '/probe'.",
         ]
 
-        for (error, description) in cases {
-            #expect(error.errorDescription == description)
-        }
+        #expect(descriptions == expected)
     }
 }

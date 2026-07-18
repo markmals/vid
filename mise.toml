@@ -87,6 +87,80 @@ description = "Run integration tests against FFmpeg and ffprobe on PATH"
 raw_args = true
 run = "swift test --filter VidIntegrationTests"
 
+[tasks.docs]
+description = "Build DocC archives for every documented target"
+run = '''
+mise run docs:command-execution
+mise run docs:ffmpeg
+mise run docs:ffprobe
+mise run docs:media-discovery
+mise run docs:media-processing
+mise run docs:media-conversion
+mise run docs:media-encoding
+mise run docs:media-remux
+mise run docs:media-repair
+mise run docs:media-subtitles
+'''
+
+[tasks."docs:prepare"]
+description = "Create the DocC output directory"
+run = "mkdir -p .build/documentation"
+
+[tasks."docs:command-execution"]
+description = "Build CommandExecution documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target CommandExecution --output-path .build/documentation/CommandExecution.doccarchive --warnings-as-errors"
+
+[tasks."docs:ffmpeg"]
+description = "Build FFmpeg documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target FFmpeg --output-path .build/documentation/FFmpeg.doccarchive --warnings-as-errors"
+
+[tasks."docs:ffprobe"]
+description = "Build FFprobe documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target FFprobe --output-path .build/documentation/FFprobe.doccarchive --warnings-as-errors"
+
+[tasks."docs:media-conversion"]
+description = "Build MediaConversion documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target MediaConversion --output-path .build/documentation/MediaConversion.doccarchive --warnings-as-errors"
+
+[tasks."docs:media-discovery"]
+description = "Build MediaDiscovery documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target MediaDiscovery --output-path .build/documentation/MediaDiscovery.doccarchive --warnings-as-errors"
+
+[tasks."docs:media-encoding"]
+description = "Build MediaEncoding documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target MediaEncoding --output-path .build/documentation/MediaEncoding.doccarchive --warnings-as-errors"
+
+[tasks."docs:media-processing"]
+description = "Build MediaProcessing documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target MediaProcessing --output-path .build/documentation/MediaProcessing.doccarchive --warnings-as-errors"
+
+[tasks."docs:media-remux"]
+description = "Build MediaRemux documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target MediaRemux --output-path .build/documentation/MediaRemux.doccarchive --warnings-as-errors"
+
+[tasks."docs:media-repair"]
+description = "Build MediaRepair documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target MediaRepair --output-path .build/documentation/MediaRepair.doccarchive --warnings-as-errors"
+
+[tasks."docs:media-subtitles"]
+description = "Build MediaSubtitles documentation"
+depends = ["docs:prepare"]
+run = "swift package --allow-writing-to-directory .build/documentation generate-documentation --target MediaSubtitles --output-path .build/documentation/MediaSubtitles.doccarchive --warnings-as-errors"
+
+[tasks."docs:preview"]
+description = "Preview one DocC target; pass --target <target>"
+raw_args = true
+run = "swift package --disable-sandbox preview-documentation"
+
 [tasks.format]
 description = "Format Swift sources and tests"
 run = "swift format --in-place --recursive Sources Tests"

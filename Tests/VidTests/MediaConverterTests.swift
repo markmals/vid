@@ -2,6 +2,11 @@ import ArgumentParser
 import Foundation
 import Testing
 
+@testable import CommandExecution
+@testable import FFmpeg
+@testable import FFprobe
+@testable import MediaConversion
+@testable import MediaProcessing
 @testable import vid
 
 @Suite("Media converter", .serialized)
@@ -29,7 +34,7 @@ struct MediaConverterTests {
         let tools = try makeConversionTools(in: directory, succeeds: true)
         let progress = ConversionProgressRecorder()
         let converter = MediaConverter(
-            runner: ToolRunner(executablePaths: tools),
+            processor: mediaProcessor(runner: ToolRunner(executablePaths: tools)),
             temporaryDirectoryRoot: intermediates,
             reportProgress: { await progress.record($0) }
         )
@@ -70,11 +75,11 @@ struct MediaConverterTests {
         )
         let tools = try makeConversionTools(in: directory, succeeds: false)
         let converter = MediaConverter(
-            runner: ToolRunner(executablePaths: tools),
+            processor: mediaProcessor(runner: ToolRunner(executablePaths: tools)),
             temporaryDirectoryRoot: intermediates
         )
 
-        await #expect(throws: VidError.self) {
+        await #expect(throws: CommandExecutionError.self) {
             try await converter.convert(path: input.path, videoCodec: .h265)
         }
 
@@ -99,7 +104,7 @@ struct MediaConverterTests {
             probeJSON: subtitleProbeJSON
         )
         let converter = MediaConverter(
-            runner: ToolRunner(executablePaths: tools),
+            processor: mediaProcessor(runner: ToolRunner(executablePaths: tools)),
             temporaryDirectoryRoot: intermediates
         )
 

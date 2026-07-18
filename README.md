@@ -35,6 +35,8 @@ mise run test
 mise run test:integration
 mise run lint
 mise run format
+mise run docs
+mise run docs:preview -- --target MediaConversion
 ```
 
 The integration suite generates temporary synthetic media and exercises real
@@ -59,6 +61,44 @@ mise run build:all           # all of the above
 ```
 
 Cross-platform and universal builds require macOS. The Linux tasks install the matching Static Linux SDK when needed.
+
+## Library products
+
+The package exposes focused library products in addition to the `vid`
+executable. A client target should depend on and import only the products whose
+APIs it uses:
+
+```swift
+.target(
+    name: "MyDaemon",
+    dependencies: [
+        .product(name: "MediaConversion", package: "vid"),
+    ]
+)
+```
+
+| Product | Responsibility | Internal package dependencies |
+| --- | --- | --- |
+| `CommandExecution` | Replaceable subprocess capture and streaming | None |
+| `FFmpeg` | FFmpeg execution and progress parsing | `CommandExecution` |
+| `FFprobe` | Typed media metadata and probing | `CommandExecution` |
+| `MediaDiscovery` | Path resolution and directory discovery | None |
+| `MediaProcessing` | Operation contracts, staging, rollback, and commit | `FFmpeg`, `FFprobe` |
+| `MediaConversion` | Recursive Apple-compatible conversion policy | `FFprobe`, `MediaDiscovery`, `MediaProcessing` |
+| `MediaEncoding` | HEVC encoding plans | `FFprobe`, `MediaProcessing` |
+| `MediaRemux` | Container remux and Apple tagging plans | `FFprobe`, `MediaProcessing` |
+| `MediaRepair` | H.264/AAC deinterlacing repair plans | `FFprobe`, `MediaProcessing` |
+| `MediaSubtitles` | External subtitle embedding plans | `FFprobe`, `MediaProcessing` |
+
+Each product has an independent DocC landing page under its source directory
+with its contract, dependencies, and a standalone usage example. The feature
+products author plans; `MediaProcessing` owns execution and filesystem safety.
+Probe and FFmpeg execution can be replaced independently through
+`MediaProbing` and `FFmpegRunning`.
+
+Build every DocC archive with `mise run docs`. To validate one target while
+iterating, run its task, for example `mise run docs:media-processing`. Preview
+one target with `mise run docs:preview -- --target MediaProcessing`.
 
 ## Command overview
 

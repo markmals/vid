@@ -1,4 +1,5 @@
 import Foundation
+import MediaConversion
 
 /// Renders conversion progress events as terminal progress bars.
 actor TerminalConversionProgressReporter {

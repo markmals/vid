@@ -1,5 +1,7 @@
 import ArgumentParser
 import Foundation
+import MediaProcessing
+import MediaRemux
 
 /// The `remux` command, which repackages media as MP4 without re-encoding video.
 struct RemuxCommand: AsyncParsableCommand {

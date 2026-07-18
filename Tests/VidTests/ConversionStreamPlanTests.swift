@@ -1,7 +1,9 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import FFprobe
+@testable import MediaConversion
+@testable import MediaProcessing
 
 @Suite("Conversion audio and subtitle plans")
 struct ConversionStreamPlanTests {

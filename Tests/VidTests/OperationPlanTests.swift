@@ -1,7 +1,12 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import FFprobe
+@testable import MediaEncoding
+@testable import MediaProcessing
+@testable import MediaRemux
+@testable import MediaRepair
+@testable import MediaSubtitles
 
 @Suite("Media operation plans")
 struct OperationPlanTests {

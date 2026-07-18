@@ -1,7 +1,8 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import FFprobe
+@testable import MediaConversion
 
 struct ProbeStreamFixture {
     let index: Int

@@ -1,5 +1,7 @@
 import ArgumentParser
 import Foundation
+import MediaDiscovery
+import MediaProcessing
 
 /// Command-line arguments that select the media files a command operates on.
 struct MediaInputOptions: ParsableArguments {

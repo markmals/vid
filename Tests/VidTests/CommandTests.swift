@@ -2,6 +2,7 @@ import ArgumentParser
 import Foundation
 import Testing
 
+@testable import MediaDiscovery
 @testable import vid
 
 @Suite("Commands", .serialized)
@@ -148,7 +149,7 @@ struct CommandTests {
             directory.appendingPathComponent("missing.mkv").path,
             subtitle.path,
         ])
-        await #expect(throws: VidError.self) {
+        await #expect(throws: MediaDiscoveryError.self) {
             try await missingVideo.run()
         }
 
@@ -156,7 +157,7 @@ struct CommandTests {
             video.path,
             directory.appendingPathComponent("missing.srt").path,
         ])
-        await #expect(throws: VidError.self) {
+        await #expect(throws: MediaDiscoveryError.self) {
             try await missingSubtitle.run()
         }
 

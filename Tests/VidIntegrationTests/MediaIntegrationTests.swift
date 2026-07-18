@@ -1,7 +1,13 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import CommandExecution
+@testable import FFprobe
+@testable import MediaEncoding
+@testable import MediaProcessing
+@testable import MediaRemux
+@testable import MediaRepair
+@testable import MediaSubtitles
 
 @Suite("Real FFmpeg integration", .serialized)
 struct MediaIntegrationTests {
@@ -35,7 +41,7 @@ struct MediaIntegrationTests {
                     ),
                 ),
             )
-            let probe = try await processor.prober.probe(output)
+            let probe = try await MediaProber().probe(output)
 
             #expect(output.lastPathComponent == "sample.mp4")
             #expect(probe.firstVideoStream?.codecName == "mpeg4")
@@ -62,7 +68,7 @@ struct MediaIntegrationTests {
                         subtitleHandling: .none,
                     )),
             )
-            let probe = try await processor.prober.probe(output)
+            let probe = try await MediaProber().probe(output)
 
             #expect(probe.firstVideoStream?.codecName == "hevc")
             #expect(probe.audioStreams.map(\.codecName) == ["aac"])
@@ -79,7 +85,7 @@ struct MediaIntegrationTests {
                 outputPolicy: integrationOutputPolicy(),
                 plan: RepairPlan(),
             )
-            let probe = try await processor.prober.probe(output)
+            let probe = try await MediaProber().probe(output)
 
             #expect(probe.firstVideoStream?.codecName == "h264")
             #expect(probe.audioStreams.map(\.codecName) == ["aac"])
@@ -100,7 +106,7 @@ struct MediaIntegrationTests {
                     title: "French",
                 ),
             )
-            let probe = try await processor.prober.probe(output)
+            let probe = try await MediaProber().probe(output)
 
             #expect(probe.textSubtitleStreams.map(\.codecName) == ["mov_text", "mov_text"])
             #expect(probe.textSubtitleStreams.map(\.language) == ["spa", "fra"])
@@ -118,7 +124,7 @@ struct MediaIntegrationTests {
         try Data("not media".utf8).write(to: input)
         let processor = MediaProcessor()
 
-        await #expect(throws: VidError.self) {
+        await #expect(throws: CommandExecutionError.self) {
             _ = try await processor.process(
                 input,
                 outputPolicy: integrationOutputPolicy(),

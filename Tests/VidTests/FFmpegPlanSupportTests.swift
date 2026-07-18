@@ -1,7 +1,8 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import FFprobe
+@testable import MediaProcessing
 
 @Suite("FFmpeg plan support")
 struct FFmpegPlanSupportTests {
@@ -38,7 +39,7 @@ struct FFmpegPlanSupportTests {
                 input: URL(fileURLWithPath: "/missing-video.mkv"),
             )
             Issue.record("A missing video stream should fail")
-        } catch let error as VidError {
+        } catch let error as MediaProcessingError {
             #expect(
                 error.errorDescription == "'/missing-video.mkv' does not contain a video stream.")
         }

@@ -1,5 +1,8 @@
 import ArgumentParser
 import Foundation
+import MediaDiscovery
+import MediaProcessing
+import MediaSubtitles
 
 /// Groups the subcommands that add external subtitle tracks to videos.
 struct SubtitlesCommand: ParsableCommand {
@@ -48,7 +51,7 @@ struct AddSubtitleCommand: AsyncParsableCommand {
 
     /// Resolves the input paths and embeds the subtitle track into the video.
     ///
-    /// - Throws: A ``VidError`` when either resolved path does not exist, a
+    /// - Throws: A ``MediaDiscoveryError`` when either resolved path does not exist, a
     ///   `ValidationError` when the video and subtitle resolve to the same file,
     ///   or any error thrown while building the output policy or processing the
     ///   video. When `shouldRemoveSubtitle` is set, a successful embed deletes
@@ -144,10 +147,10 @@ private struct AddSubtitleWorkflow {
         removeSubtitle: Bool,
     ) async throws {
         guard FileManager.default.fileExists(atPath: video.path) else {
-            throw VidError.fileDoesNotExist(path: video.path)
+            throw MediaDiscoveryError.fileDoesNotExist(path: video.path)
         }
         guard FileManager.default.fileExists(atPath: subtitle.path) else {
-            throw VidError.fileDoesNotExist(path: subtitle.path)
+            throw MediaDiscoveryError.fileDoesNotExist(path: subtitle.path)
         }
         guard video.standardizedFileURL != subtitle.standardizedFileURL else {
             throw ValidationError("The video and subtitle must be different files.")

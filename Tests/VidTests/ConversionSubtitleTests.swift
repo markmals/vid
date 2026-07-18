@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import MediaConversion
 
 @Suite("Conversion subtitle discovery")
 struct ConversionSubtitleTests {

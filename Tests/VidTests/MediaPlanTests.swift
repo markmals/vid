@@ -1,7 +1,10 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import FFprobe
+@testable import MediaEncoding
+@testable import MediaProcessing
+@testable import MediaRemux
 
 @Suite("FFmpeg plans")
 struct MediaPlanTests {

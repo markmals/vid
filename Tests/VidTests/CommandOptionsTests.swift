@@ -2,6 +2,8 @@ import ArgumentParser
 import Foundation
 import Testing
 
+@testable import MediaDiscovery
+@testable import MediaProcessing
 @testable import vid
 
 @Suite("Command options")

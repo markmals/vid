@@ -1,5 +1,6 @@
 import ArgumentParser
 import Foundation
+import MediaConversion
 
 /// Converts an existing file or media library to Apple-compatible MP4 files.
 struct ConvertCommand: AsyncParsableCommand {
@@ -14,7 +15,7 @@ struct ConvertCommand: AsyncParsableCommand {
 
     /// The video codec produced when re-encoding is required.
     @Option(name: .long, help: "Target video codec: h264 or h265.")
-    var videoCodec: ConversionVideoCodec = .h265
+    var videoCodec: ConversionVideoCodecArgument = .h265
 
     mutating func run() async throws {
         let progressReporter = TerminalConversionProgressReporter()
@@ -23,6 +24,18 @@ struct ConvertCommand: AsyncParsableCommand {
                 await progressReporter.report(progress)
             }
         )
-        _ = try await converter.convert(path: path, videoCodec: videoCodec)
+        _ = try await converter.convert(path: path, videoCodec: videoCodec.codec)
+    }
+}
+
+enum ConversionVideoCodecArgument: String, CaseIterable, ExpressibleByArgument {
+    case h264
+    case h265
+
+    var codec: ConversionVideoCodec {
+        switch self {
+        case .h264: .h264
+        case .h265: .h265
+        }
     }
 }

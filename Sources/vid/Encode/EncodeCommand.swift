@@ -1,5 +1,8 @@
 import ArgumentParser
+import FFprobe
 import Foundation
+import MediaEncoding
+import MediaProcessing
 
 /// The `encode` command, which re-encodes video as HEVC in an Apple-compatible MP4.
 struct EncodeCommand: AsyncParsableCommand {
@@ -78,7 +81,7 @@ struct EncodeCommand: AsyncParsableCommand {
         let outputPolicy = try output.makeOutputPolicy()
 
         for file in try input.files() {
-            let probe = shouldSkipHEVCInputs ? try await processor.prober.probe(file) : nil
+            let probe = shouldSkipHEVCInputs ? try await MediaProber().probe(file) : nil
             if probe?.firstVideoStream?.codecName == "hevc" {
                 print("Skipping \(file.path); video is already HEVC")
                 continue

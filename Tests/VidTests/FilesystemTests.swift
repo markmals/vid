@@ -1,7 +1,8 @@
 import Foundation
 import Testing
 
-@testable import vid
+@testable import MediaDiscovery
+@testable import MediaProcessing
 
 @Suite("Filesystem behavior")
 struct FilesystemTests {
@@ -38,7 +39,7 @@ struct FilesystemTests {
         )
         #expect(discovered == [media.standardizedFileURL])
 
-        #expect(throws: VidError.self) {
+        #expect(throws: MediaDiscoveryError.self) {
             try InputDiscovery().mediaFiles(
                 at: [directory.appendingPathComponent("missing").path],
                 recursive: false,
@@ -48,7 +49,7 @@ struct FilesystemTests {
         let emptyDirectory = directory.appendingPathComponent("empty")
         try FileManager.default.createDirectory(
             at: emptyDirectory, withIntermediateDirectories: true)
-        #expect(throws: VidError.self) {
+        #expect(throws: MediaDiscoveryError.self) {
             try InputDiscovery().mediaFiles(at: [emptyDirectory.path], recursive: true)
         }
     }
@@ -61,7 +62,7 @@ struct FilesystemTests {
             directory.appendingPathComponent("movie.mkv"), contents: "source")
         let missingDirectory = directory.appendingPathComponent("missing")
 
-        #expect(throws: VidError.self) {
+        #expect(throws: MediaProcessingError.self) {
             try OutputTransaction(
                 sourceURL: source,
                 outputFilenameSuffix: "remuxed",
@@ -70,7 +71,7 @@ struct FilesystemTests {
         }
 
         let regularFile = try writeTestFile(directory.appendingPathComponent("not-a-directory"))
-        #expect(throws: VidError.self) {
+        #expect(throws: MediaProcessingError.self) {
             try OutputTransaction(
                 sourceURL: source,
                 outputFilenameSuffix: "remuxed",
@@ -78,7 +79,7 @@ struct FilesystemTests {
             )
         }
 
-        #expect(throws: VidError.self) {
+        #expect(throws: MediaProcessingError.self) {
             try OutputTransaction(
                 sourceURL: source,
                 outputFilenameSuffix: "remuxed",
@@ -90,7 +91,7 @@ struct FilesystemTests {
             directory.appendingPathComponent("movie.mp4"),
             contents: "old",
         )
-        #expect(throws: VidError.self) {
+        #expect(throws: MediaProcessingError.self) {
             try OutputTransaction(
                 sourceURL: source,
                 outputFilenameSuffix: "remuxed",

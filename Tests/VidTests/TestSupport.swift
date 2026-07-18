@@ -1,6 +1,9 @@
 import Foundation
 
-@testable import vid
+@testable import CommandExecution
+@testable import FFmpeg
+@testable import FFprobe
+@testable import MediaProcessing
 
 #if canImport(Darwin)
     import Darwin
@@ -68,6 +71,13 @@ func outputPolicy(
         shouldOverwriteExistingOutput: overwrite,
         shouldRemoveSource: removeSource,
         shouldReplaceInput: replaceInput,
+    )
+}
+
+func mediaProcessor(runner: any CommandRunning) -> MediaProcessor {
+    MediaProcessor(
+        prober: MediaProber(runner: runner),
+        runner: FFmpegRunner(commandRunner: runner)
     )
 }
 
