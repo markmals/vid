@@ -87,7 +87,7 @@ struct MediaPlanTests {
 }
 
 extension [String] {
-    fileprivate func containsSequence(_ expected: [String]) -> Bool {
+    func containsSequence(_ expected: [String]) -> Bool {
         guard !expected.isEmpty, count >= expected.count else {
             return false
         }

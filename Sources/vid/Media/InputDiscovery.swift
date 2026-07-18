@@ -51,15 +51,12 @@ struct InputDiscovery: Sendable {
             ? [.skipsHiddenFiles]
             : [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
 
-        guard
-            let enumerator = FileManager.default.enumerator(
-                at: directory,
-                includingPropertiesForKeys: Array(resourceKeys),
-                options: options,
-            )
-        else {
-            return []
-        }
+        // The caller verifies that `directory` is an existing file URL.
+        let enumerator = FileManager.default.enumerator(
+            at: directory,
+            includingPropertiesForKeys: Array(resourceKeys),
+            options: options,
+        )!
 
         var files: [URL] = []
         for case let file as URL in enumerator {

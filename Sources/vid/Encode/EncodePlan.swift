@@ -5,7 +5,7 @@ import Foundation
 struct EncodePlan: MediaOperationPlan {
     /// The filename suffix (`encoded`) applied when the default output would
     /// collide with the source file.
-    let outputFilenameSuffix = "encoded"
+    var outputFilenameSuffix: String { "encoded" }
 
     /// The settings controlling audio, subtitle, and disposition handling.
     let settings: EncodeSettings

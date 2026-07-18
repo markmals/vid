@@ -5,7 +5,7 @@ import Foundation
 struct AddSubtitlePlan: MediaOperationPlan {
     /// The filename suffix (`subtitled`) applied when the default output would
     /// collide with the source file.
-    let outputFilenameSuffix = "subtitled"
+    var outputFilenameSuffix: String { "subtitled" }
 
     /// The external subtitle file to add as a new track.
     let subtitle: URL

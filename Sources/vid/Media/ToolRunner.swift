@@ -1,8 +1,26 @@
 import Subprocess
 
+#if canImport(System)
+    import System
+#else
+    import SystemPackage
+#endif
+
 /// Runs external command-line tools as subprocesses, either capturing their
 /// output or streaming it to the current terminal.
 struct ToolRunner: Sendable {
+    /// Full executable paths used in place of `PATH` lookup, keyed by tool name.
+    private let executablePaths: [String: String]
+
+    /// Creates a runner, optionally overriding where named tools are found.
+    ///
+    /// - Parameter executablePaths: Full executable paths keyed by the names
+    ///   passed to ``captureOutput(of:arguments:)`` and
+    ///   ``streamOutput(of:arguments:)``.
+    init(executablePaths: [String: String] = [:]) {
+        self.executablePaths = executablePaths
+    }
+
     /// Runs a tool to completion and returns its standard output.
     ///
     /// Spawns `tool` as a subprocess with the given arguments, buffering both
@@ -16,7 +34,7 @@ struct ToolRunner: Sendable {
     ///   exits with a non-zero termination status.
     func captureOutput(of tool: String, arguments: [String]) async throws -> String {
         let execution = try await Subprocess.run(
-            .name(tool),
+            executable(for: tool),
             arguments: Arguments(arguments),
             output: .string(limit: 4 * 1_024 * 1_024),
             error: .string(limit: 1_024 * 1_024),
@@ -30,7 +48,8 @@ struct ToolRunner: Sendable {
             )
         }
 
-        return execution.standardOutput ?? ""
+        // String capture always supplies a value, including an empty string.
+        return execution.standardOutput!
     }
 
     /// Runs a tool to completion, streaming its output directly to the terminal.
@@ -47,7 +66,7 @@ struct ToolRunner: Sendable {
         print(CommandPreview.render(tool: tool, arguments: arguments))
 
         let execution = try await Subprocess.run(
-            .name(tool),
+            executable(for: tool),
             arguments: Arguments(arguments),
             output: .currentStandardOutput,
             error: .currentStandardError,
@@ -60,6 +79,12 @@ struct ToolRunner: Sendable {
                 diagnostic: nil,
             )
         }
+    }
+    private func executable(for tool: String) -> Executable {
+        guard let path = executablePaths[tool] else {
+            return .name(tool)
+        }
+        return .path(FilePath(path))
     }
 }
 
