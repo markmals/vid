@@ -14,6 +14,8 @@ public enum MediaProcessingError: Error, LocalizedError, Sendable {
     case outputExists(path: String)
 
     /// A concise description suitable for command-line display.
+    ///
+    /// - Complexity: O(n), where n is the length of the associated string.
     public var errorDescription: String? {
         switch self {
         case .emptyOutput(let path):

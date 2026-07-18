@@ -34,7 +34,7 @@ public struct RepairPlan: MediaOperationPlan {
         let video = try FFmpegPlanSupport.requiredVideoStream(in: probe, input: input)
         let firstAudio = Array(probe.audioStreams.prefix(1))
 
-        var arguments = FFmpegPlanSupport.inputArguments(input)
+        var arguments = FFmpegPlanSupport.inputArguments(for: input)
         FFmpegPlanSupport.appendMaps(
             video: video,
             audio: firstAudio,

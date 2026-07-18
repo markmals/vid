@@ -39,7 +39,7 @@ struct MediaConverterTests {
             reportProgress: { await progress.record($0) }
         )
 
-        let outputs = try await converter.convert(path: library.path, videoCodec: .h265)
+        let outputs = try await converter.convert(library.path, videoCodec: .h265)
 
         #expect(
             outputs.map(\.lastPathComponent).sorted() == ["alpha.mp4", "beta.mp4", "gamma.mp4"])
@@ -80,7 +80,7 @@ struct MediaConverterTests {
         )
 
         await #expect(throws: CommandExecutionError.self) {
-            try await converter.convert(path: input.path, videoCodec: .h265)
+            try await converter.convert(input.path, videoCodec: .h265)
         }
 
         #expect(try String(contentsOf: input, encoding: .utf8) == "original")
@@ -108,7 +108,7 @@ struct MediaConverterTests {
             temporaryDirectoryRoot: intermediates
         )
 
-        let outputs = try await converter.convert(path: input.path, videoCodec: .h265)
+        let outputs = try await converter.convert(input.path, videoCodec: .h265)
 
         #expect(outputs.map(\.lastPathComponent) == ["movie.mp4"])
         #expect(!FileManager.default.fileExists(atPath: input.path))

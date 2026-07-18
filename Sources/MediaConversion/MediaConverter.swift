@@ -13,7 +13,7 @@ public enum MediaConversionProgress: Equatable, Sendable {
 /// Discovers and safely replaces existing media with Apple-compatible MP4 files.
 public struct MediaConverter: Sendable {
     private let processor: MediaProcessor
-    private let reportProgress: @Sendable (MediaConversionProgress) async -> Void
+    private let reportProgress: @Sendable (_ progress: MediaConversionProgress) async -> Void
     private let temporaryDirectoryRoot: URL
 
     /// Creates a converter with independently injectable processing, temporary
@@ -21,16 +21,31 @@ public struct MediaConverter: Sendable {
     public init(
         processor: MediaProcessor = MediaProcessor(),
         temporaryDirectoryRoot: URL = FileManager.default.temporaryDirectory,
-        reportProgress: @escaping @Sendable (MediaConversionProgress) async -> Void = { _ in }
+        reportProgress: @escaping @Sendable (_ progress: MediaConversionProgress) async -> Void = {
+            _ in
+        }
     ) {
         self.processor = processor
         self.temporaryDirectoryRoot = temporaryDirectoryRoot
         self.reportProgress = reportProgress
     }
 
-    /// Converts one file or every supported file beneath a directory.
+    /// Recursively converts one file or every supported file beneath a directory.
+    ///
+    /// For each input, the conversion discovers matching subtitle files, embeds
+    /// the preferred text track, stages the remaining subtitles as sidecars,
+    /// commits an Apple-compatible MP4, and then removes or replaces the source.
+    /// The converter reports batch and per-file progress through the callback
+    /// supplied at initialization.
+    ///
+    /// - Parameters:
+    ///   - path: The file or directory to discover and convert.
+    ///   - videoCodec: The video codec to use when re-encoding is required.
+    /// - Returns: The final MP4 URLs, in discovery order.
+    /// - Throws: An error when discovery, destination validation, probing,
+    ///   FFmpeg execution, subtitle processing, or an output transaction fails.
     public func convert(
-        path: String,
+        _ path: String,
         videoCodec: ConversionVideoCodec
     ) async throws -> [URL] {
         let files = try InputDiscovery().mediaFiles(
@@ -41,7 +56,7 @@ public struct MediaConverter: Sendable {
         try validateUniqueDestinations(for: files)
         await reportProgress(.batch(processed: 0, total: files.count))
 
-        let settings = MediaConversionSettings.highQuality(videoCodec: videoCodec)
+        let settings = MediaConversionSettings.makeHighQuality(videoCodec: videoCodec)
         let outputPolicy = OutputPolicy(
             outputDirectory: nil,
             shouldOverwriteExistingOutput: true,

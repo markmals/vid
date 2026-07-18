@@ -22,8 +22,8 @@ public struct MediaConversionSettings: Sendable {
         self.preset = preset
     }
 
-    /// High-quality defaults intended for long-lived media libraries.
-    public static func highQuality(videoCodec: ConversionVideoCodec) -> Self {
+    /// Creates high-quality settings intended for long-lived media libraries.
+    public static func makeHighQuality(videoCodec: ConversionVideoCodec) -> Self {
         Self(videoCodec: videoCodec, crf: 18, preset: "veryslow")
     }
 }

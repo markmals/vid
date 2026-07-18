@@ -49,7 +49,7 @@ public struct EncodePlan: MediaOperationPlan {
             handling: settings.subtitleHandling,
         )
 
-        var arguments = FFmpegPlanSupport.inputArguments(input)
+        var arguments = FFmpegPlanSupport.inputArguments(for: input)
         FFmpegPlanSupport.appendMaps(
             video: video,
             audio: audio,

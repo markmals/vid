@@ -48,7 +48,7 @@ public struct AddSubtitlePlan: MediaOperationPlan {
         let audio = probe.audioStreams
         let existingSubtitles = probe.textSubtitleStreams
 
-        var arguments = FFmpegPlanSupport.inputArguments(input)
+        var arguments = FFmpegPlanSupport.inputArguments(for: input)
         arguments += ["-i", subtitle.path]
         FFmpegPlanSupport.appendMaps(
             video: video,

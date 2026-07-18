@@ -34,14 +34,31 @@ public struct MediaProcessor: Sendable {
         self.runner = runner
     }
 
-    /// Processes one input, staging every output before replacing the source.
+    /// Processes one input through a staged FFmpeg transaction.
+    ///
+    /// The method prints processing and creation messages to standard output.
+    /// It commits the main output and extracted subtitle sidecars only after all
+    /// FFmpeg work succeeds, and rolls staged work back after a failure.
+    ///
+    /// - Parameters:
+    ///   - input: The source media file.
+    ///   - outputPolicy: The destination and source-replacement behavior.
+    ///   - plan: The operation that builds FFmpeg and subtitle extraction work.
+    ///   - suppliedProbe: Probe metadata to use instead of invoking the prober.
+    ///   - temporaryDirectoryRoot: The root under which the method creates its
+    ///     isolated temporary workspace.
+    ///   - progress: An asynchronous observer for completion fractions emitted
+    ///     by the configured FFmpeg runner.
+    /// - Returns: The final URL of the committed main output.
+    /// - Throws: An error from probing, planning, staging, FFmpeg execution,
+    ///   output validation, or transaction commit.
     public func process(
         _ input: URL,
         outputPolicy: OutputPolicy,
         plan: some MediaOperationPlan,
         probe suppliedProbe: MediaProbe? = nil,
         temporaryDirectoryRoot: URL = FileManager.default.temporaryDirectory,
-        progress: @escaping @Sendable (Double) async -> Void = { _ in },
+        progress: @escaping @Sendable (_ fraction: Double) async -> Void = { _ in },
     ) async throws -> URL {
         print("Processing \(input.path)")
         let probe: MediaProbe
@@ -101,7 +118,7 @@ public struct MediaProcessor: Sendable {
 
     private func extract(_ sidecar: SidecarTransaction) async throws {
         let extraction = sidecar.extraction
-        var arguments = FFmpegPlanSupport.inputArguments(extraction.inputURL)
+        var arguments = FFmpegPlanSupport.inputArguments(for: extraction.inputURL)
         arguments += [
             "-map", "0:\(extraction.stream.index)?",
             "-c:s", extraction.encoding.ffmpegCodecName,

@@ -13,7 +13,7 @@ let converter = MediaConverter { progress in
     print(progress)
 }
 let outputs = try await converter.convert(
-    path: "~/Media/Incoming",
+    "~/Media/Incoming",
     videoCodec: .h265
 )
 ```

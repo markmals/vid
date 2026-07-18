@@ -63,7 +63,7 @@ func conversionProbe(
 }
 
 func conversionSettings(_ codec: ConversionVideoCodec) -> MediaConversionSettings {
-    .highQuality(videoCodec: codec)
+    .makeHighQuality(videoCodec: codec)
 }
 
 actor ConversionProgressRecorder {

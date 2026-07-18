@@ -25,7 +25,7 @@ public protocol CommandLineStreaming: Sendable {
     func streamLines(
         of tool: String,
         arguments: [String],
-        onStandardOutputLine: @escaping @Sendable (String) async -> Void
+        onStandardOutputLine: @escaping @Sendable (_ line: String) async -> Void
     ) async throws
 }
 
@@ -119,7 +119,7 @@ public struct ToolRunner: CommandRunning {
     public func streamLines(
         of tool: String,
         arguments: [String],
-        onStandardOutputLine: @escaping @Sendable (String) async -> Void
+        onStandardOutputLine: @escaping @Sendable (_ line: String) async -> Void
     ) async throws {
         print(CommandPreview.render(tool: tool, arguments: arguments))
 

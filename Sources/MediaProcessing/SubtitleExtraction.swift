@@ -8,6 +8,7 @@ public enum SubtitleSidecarEncoding: Sendable {
     /// Convert a text subtitle to SubRip.
     case srt
 
+    /// The FFmpeg codec token used to write the sidecar.
     public var ffmpegCodecName: String {
         switch self {
         case .copy: "copy"

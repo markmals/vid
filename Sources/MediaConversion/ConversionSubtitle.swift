@@ -11,6 +11,10 @@ public enum ConversionSubtitleRole: Int, Comparable, Sendable {
     /// A subtitle without a preferred role.
     case unspecified
 
+    /// Returns whether `lhs` has higher subtitle-selection priority than `rhs`.
+    ///
+    /// Forced subtitles sort before default subtitles, followed by SDH and
+    /// unspecified subtitles.
     public static func < (lhs: Self, rhs: Self) -> Bool {
         lhs.rawValue < rhs.rawValue
     }

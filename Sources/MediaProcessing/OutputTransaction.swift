@@ -29,7 +29,7 @@ public struct OutputPolicy: Sendable {
 }
 
 /// A staged filesystem transaction that writes a media operation's output to a
-/// temporary file and atomically promotes it to its final location on commit.
+/// temporary file and promotes it to its final location on commit.
 ///
 /// The transaction chooses a collision-free destination, tracks whether the
 /// source should be removed, and cleans up the temporary file if the operation
@@ -48,6 +48,15 @@ public struct OutputTransaction: Sendable {
     private let shouldRemoveSource: Bool
 
     /// Resolves the final output and creates an isolated temporary directory.
+    ///
+    /// - Parameters:
+    ///   - sourceURL: The media file the operation reads.
+    ///   - outputFilenameSuffix: The suffix used to avoid replacing an MP4
+    ///     source when replacement was not requested.
+    ///   - policy: The destination and source-removal behavior.
+    ///   - temporaryDirectoryRoot: The root under which the transaction creates
+    ///     its workspace. Use the destination filesystem when atomic promotion
+    ///     is required.
     public init(
         sourceURL: URL,
         outputFilenameSuffix: String,
@@ -147,7 +156,9 @@ public struct OutputTransaction: Sendable {
         discardTemporaryOutput()
     }
 
-    /// Deletes the complete temporary workspace if it still exists.
+    /// Attempts to delete the complete temporary workspace if it still exists.
+    ///
+    /// Removal failures are ignored, so the workspace may remain on disk.
     public func discardTemporaryOutput() {
         guard FileManager.default.fileExists(atPath: temporaryDirectoryURL.path) else {
             return

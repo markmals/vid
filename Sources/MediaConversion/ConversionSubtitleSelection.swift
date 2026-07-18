@@ -121,13 +121,13 @@ struct ConversionSubtitleSelection: Sendable {
     }
 
     private static func role(for stream: MediaStream) -> ConversionSubtitleRole {
-        if stream.disposition?.isForced == 1 {
+        if stream.disposition?.forcedFlag == 1 {
             return .forced
         }
-        if stream.disposition?.isDefault == 1 {
+        if stream.disposition?.defaultFlag == 1 {
             return .defaultTrack
         }
-        if stream.disposition?.isHearingImpaired == 1 || titleMarksSDH(stream.tags?.title) {
+        if stream.disposition?.hearingImpairedFlag == 1 || titleMarksSDH(stream.tags?.title) {
             return .sdh
         }
         return .unspecified

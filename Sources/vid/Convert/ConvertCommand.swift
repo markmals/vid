@@ -24,7 +24,7 @@ struct ConvertCommand: AsyncParsableCommand {
                 await progressReporter.report(progress)
             }
         )
-        _ = try await converter.convert(path: path, videoCodec: videoCodec.codec)
+        _ = try await converter.convert(path, videoCodec: videoCodec.codec)
     }
 }
 

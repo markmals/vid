@@ -27,16 +27,22 @@ public struct MediaProbe: Decodable, Sendable {
     }
 
     /// The audio streams contained in the media file.
+    ///
+    /// - Complexity: O(n), where n is the number of streams.
     public var audioStreams: [MediaStream] {
         streams.filter { $0.codecType == "audio" }
     }
 
     /// The subtitle streams encoded as bitmap subtitles.
+    ///
+    /// - Complexity: O(n), where n is the number of streams.
     public var bitmapSubtitleStreams: [MediaStream] {
         subtitleStreams.filter(\.isBitmapSubtitle)
     }
 
     /// Duration in seconds, when ffprobe supplied a finite positive value.
+    ///
+    /// - Complexity: O(n), where n is the length of the duration string.
     public var durationSeconds: Double? {
         guard let duration = format?.duration,
             let seconds = Double(duration),
@@ -49,16 +55,22 @@ public struct MediaProbe: Decodable, Sendable {
     }
 
     /// The first genuine video stream, excluding attached cover art.
+    ///
+    /// - Complexity: O(n), where n is the number of streams.
     public var firstVideoStream: MediaStream? {
-        streams.first { $0.codecType == "video" && $0.disposition?.attachedPicture != 1 }
+        streams.first { $0.codecType == "video" && $0.disposition?.attachedPictureFlag != 1 }
     }
 
     /// The subtitle streams contained in the media file.
+    ///
+    /// - Complexity: O(n), where n is the number of streams.
     public var subtitleStreams: [MediaStream] {
         streams.filter { $0.codecType == "subtitle" }
     }
 
     /// The subtitle streams encoded as text.
+    ///
+    /// - Complexity: O(n), where n is the number of streams.
     public var textSubtitleStreams: [MediaStream] {
         subtitleStreams.filter { !$0.isBitmapSubtitle }
     }
@@ -68,33 +80,40 @@ public struct MediaProbe: Decodable, Sendable {
 public struct MediaStream: Decodable, Sendable {
     /// The disposition flags describing a stream's role.
     public struct Disposition: Decodable, Sendable {
-        /// Whether the stream is an attached picture.
-        public let attachedPicture: Int?
-        /// Whether the stream is the source's default track.
-        public let isDefault: Int?
-        /// Whether the stream contains forced subtitles.
-        public let isForced: Int?
-        /// Whether the stream serves deaf and hard-of-hearing viewers.
-        public let isHearingImpaired: Int?
+        /// The raw ffprobe attached-picture flag: `1` when enabled, `0` when
+        /// disabled, or `nil` when the field is absent.
+        public let attachedPictureFlag: Int?
+        /// The raw ffprobe default-track flag: `1` when enabled, `0` when
+        /// disabled, or `nil` when the field is absent.
+        public let defaultFlag: Int?
+        /// The raw ffprobe forced-subtitle flag: `1` when enabled, `0` when
+        /// disabled, or `nil` when the field is absent.
+        public let forcedFlag: Int?
+        /// The raw ffprobe hearing-impaired flag: `1` when enabled, `0` when
+        /// disabled, or `nil` when the field is absent.
+        public let hearingImpairedFlag: Int?
 
-        /// Creates stream disposition metadata.
+        /// Creates stream disposition metadata from raw ffprobe flags.
+        ///
+        /// Every flag uses `1` for enabled, `0` for disabled, and `nil` when
+        /// the corresponding field is absent.
         public init(
-            attachedPicture: Int? = nil,
-            isDefault: Int? = nil,
-            isForced: Int? = nil,
-            isHearingImpaired: Int? = nil,
+            attachedPictureFlag: Int? = nil,
+            defaultFlag: Int? = nil,
+            forcedFlag: Int? = nil,
+            hearingImpairedFlag: Int? = nil,
         ) {
-            self.attachedPicture = attachedPicture
-            self.isDefault = isDefault
-            self.isForced = isForced
-            self.isHearingImpaired = isHearingImpaired
+            self.attachedPictureFlag = attachedPictureFlag
+            self.defaultFlag = defaultFlag
+            self.forcedFlag = forcedFlag
+            self.hearingImpairedFlag = hearingImpairedFlag
         }
 
         enum CodingKeys: String, CodingKey {
-            case attachedPicture = "attached_pic"
-            case isDefault = "default"
-            case isForced = "forced"
-            case isHearingImpaired = "hearing_impaired"
+            case attachedPictureFlag = "attached_pic"
+            case defaultFlag = "default"
+            case forcedFlag = "forced"
+            case hearingImpairedFlag = "hearing_impaired"
         }
     }
 
@@ -155,6 +174,8 @@ public struct MediaStream: Decodable, Sendable {
     }
 
     /// The stream's language code, lowercased.
+    ///
+    /// - Complexity: O(n), where n is the length of the language tag.
     public var language: String? {
         tags?.language?.lowercased()
     }

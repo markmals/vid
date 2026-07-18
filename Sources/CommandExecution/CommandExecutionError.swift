@@ -17,6 +17,8 @@ public struct CommandExecutionError: Error, LocalizedError, Sendable {
     }
 
     /// A concise description suitable for command-line display.
+    ///
+    /// - Complexity: O(n), where n is the combined length of the stored strings.
     public var errorDescription: String? {
         if let diagnostic, !diagnostic.isEmpty {
             "\(tool) \(status): \(diagnostic)"

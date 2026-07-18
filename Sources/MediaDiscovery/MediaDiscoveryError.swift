@@ -8,6 +8,8 @@ public enum MediaDiscoveryError: Error, LocalizedError, Sendable {
     case noInputFiles
 
     /// A concise description suitable for command-line display.
+    ///
+    /// - Complexity: O(n), where n is the length of the associated path.
     public var errorDescription: String? {
         switch self {
         case .fileDoesNotExist(let path):

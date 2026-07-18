@@ -33,7 +33,7 @@ public struct ConversionPlan: MediaOperationPlan {
             probe: probe,
             externalSubtitles: externalSubtitles
         )
-        var arguments = FFmpegPlanSupport.inputArguments(input)
+        var arguments = FFmpegPlanSupport.inputArguments(for: input)
         appendExternalSubtitleInput(subtitleSelection.selected, to: &arguments)
         FFmpegPlanSupport.appendMaps(
             video: video,

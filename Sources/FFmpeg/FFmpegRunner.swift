@@ -5,11 +5,16 @@ public protocol FFmpegRunning: Sendable {
     /// Runs FFmpeg with output attached to the current terminal.
     func run(arguments: [String]) async throws
 
-    /// Runs FFmpeg and reports completed fractions from zero through one.
+    /// Runs FFmpeg and reports completion fractions.
+    ///
+    /// Conforming implementations report values in the closed range `0...1`.
+    /// A successful run reports `0` before work begins and ends with `1`.
+    /// Intermediate values may be omitted when duration is unavailable, and
+    /// implementations may report the same fraction more than once.
     func run(
         arguments: [String],
         durationSeconds: Double?,
-        onProgress: @escaping @Sendable (Double) async -> Void
+        onProgress: @escaping @Sendable (_ fraction: Double) async -> Void
     ) async throws
 }
 
@@ -32,7 +37,7 @@ public struct FFmpegRunner: FFmpegRunning {
     public func run(
         arguments: [String],
         durationSeconds: Double?,
-        onProgress: @escaping @Sendable (Double) async -> Void
+        onProgress: @escaping @Sendable (_ fraction: Double) async -> Void
     ) async throws {
         let progressArguments = ["-progress", "pipe:1", "-nostats"] + arguments
         await onProgress(0)

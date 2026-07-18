@@ -9,7 +9,7 @@ struct FFmpegPlanSupportTests {
     @Test("Inputs and maps preserve stream order")
     func inputsAndMaps() {
         let input = URL(fileURLWithPath: "/media/My Movie.mkv")
-        #expect(FFmpegPlanSupport.inputArguments(input).suffix(2) == ["-i", input.path])
+        #expect(FFmpegPlanSupport.inputArguments(for: input).suffix(2) == ["-i", input.path])
 
         var arguments: [String] = []
         FFmpegPlanSupport.appendMaps(

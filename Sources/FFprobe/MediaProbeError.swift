@@ -6,6 +6,8 @@ public enum MediaProbeError: Error, LocalizedError, Sendable {
     case unreadableProbe(path: String)
 
     /// A concise description suitable for command-line display.
+    ///
+    /// - Complexity: O(n), where n is the length of the associated path.
     public var errorDescription: String? {
         switch self {
         case .unreadableProbe(let path):

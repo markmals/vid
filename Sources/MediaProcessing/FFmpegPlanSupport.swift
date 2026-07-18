@@ -15,7 +15,7 @@ public enum FFmpegPlanSupport {
     ///
     /// - Parameter input: The source media file to read.
     /// - Returns: The ordered FFmpeg arguments that open `input`.
-    public static func inputArguments(_ input: URL) -> [String] {
+    public static func inputArguments(for input: URL) -> [String] {
         [
             "-hide_banner", "-nostdin", "-y",
             "-probesize", "50M",
