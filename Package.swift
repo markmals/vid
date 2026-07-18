@@ -33,5 +33,12 @@ let package = Package(
                 .enableUpcomingFeature("ApproachableConcurrency"),
             ],
         ),
+        .testTarget(
+            name: "VidIntegrationTests",
+            dependencies: ["vid"],
+            swiftSettings: [
+                .enableUpcomingFeature("ApproachableConcurrency"),
+            ],
+        ),
     ]
 )

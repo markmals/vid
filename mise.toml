@@ -78,9 +78,14 @@ raw_args = true
 run = "swift run vid"
 
 [tasks.test]
-description = "Run the test suite"
+description = "Run the unit test suite"
 raw_args = true
-run = "swift test"
+run = "swift test --filter VidTests"
+
+[tasks."test:integration"]
+description = "Run integration tests against FFmpeg and ffprobe on PATH"
+raw_args = true
+run = "swift test --filter VidIntegrationTests"
 
 [tasks.format]
 description = "Format Swift sources and tests"

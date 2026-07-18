@@ -21,6 +21,9 @@ jobs:
           install: true
           cache: true
 
+      - name: Install FFmpeg
+        run: brew install ffmpeg
+
       - name: Verify tag version
         run: |
           expected_version="${GITHUB_REF_NAME#v}"
@@ -32,6 +35,9 @@ jobs:
 
       - name: Test
         run: mise run test
+
+      - name: Integration test
+        run: mise run test:integration
 
       - name: Build universal macOS binary
         run: |

@@ -32,9 +32,14 @@ Common development commands are exposed as Mise tasks:
 mise run build
 mise run run -- --help
 mise run test
+mise run test:integration
 mise run lint
 mise run format
 ```
+
+The integration suite generates temporary synthetic media and exercises real
+`ffmpeg` and `ffprobe` processes. It requires the runtime tools on `PATH` with
+the MPEG-4, AAC, H.264 (`libx264`), and HEVC (`libx265`) encoders available.
 
 Target-specific release tasks encode the product, target triple or Swift SDK, and scratch path:
 
