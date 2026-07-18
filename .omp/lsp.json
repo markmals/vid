@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "sourcekit-lsp": {
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "exec \"$(mise where swift)/usr/bin/sourcekit-lsp\""
+      ]
+    }
+  }
+}
