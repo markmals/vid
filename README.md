@@ -103,6 +103,7 @@ one target with `mise run docs:preview -- --target MediaProcessing`.
 ## Command overview
 
 ```text
+vid convert
 vid remux
 vid tag
 vid encode
@@ -113,6 +114,7 @@ vid subtitles add-matching
 
 | Command | Accepts files | Accepts directories | Purpose |
 | --- | --- | --- | --- |
+| `vid convert` | One file | Yes, recursively | Convert a file or media library to Apple-compatible MP4, replacing each source |
 | `vid remux` | Yes, one or more | Yes | Repackage media as MP4 without re-encoding video |
 | `vid tag` | Yes, one or more | Yes | Create an Apple-compatible MP4 without re-encoding video |
 | `vid encode` | Yes, one or more | Yes | Encode video as HEVC in an Apple-compatible MP4 |
@@ -132,6 +134,10 @@ vid tag movie.mkv ~/Downloads/another-movie.mkv
 vid encode ~/Media/Incoming movie.mkv
 ```
 
+`vid convert` instead accepts exactly one file or directory path. A directory is
+always searched recursively; its fixed input set is `avi`, `mkv`, `mov`, and
+`mp4`.
+
 A directory is processed at its top level by default. Pass `--recursive` or `-r` to descend into subdirectories:
 
 ```sh
@@ -148,7 +154,9 @@ An explicitly supplied file is still sent to `ffprobe` even if its extension is 
 
 ## Output and source-file behavior
 
-By default, source files are preserved.
+Source files are preserved by default except when using `vid convert`.
+`vid convert` replaces each successfully converted source with its corresponding
+MP4 and overwrites an existing destination MP4.
 
 For a non-MP4 input, the output uses the same basename with an `.mp4` extension:
 
@@ -166,7 +174,8 @@ Movie.mp4 -> Movie.repaired.mp4
 Movie.mp4 -> Movie.subbed.mp4
 ```
 
-Every media operation supports these output options:
+The `remux`, `tag`, `encode`, `repair`, and subtitle commands support these
+output options:
 
 | Option | Behavior |
 | --- | --- |
@@ -177,13 +186,17 @@ Every media operation supports these output options:
 
 `--replace` cannot be combined with `--output-directory`.
 
-> `--remove-source`, `--replace`, `--remove-subtitle`, and `--remove-subtitles` permanently delete files. They do not move files to the macOS Trash or a Linux desktop trash directory.
+> `vid convert` always replaces each successfully converted input. The
+> `--remove-source`, `--replace`, `--remove-subtitle`, and `--remove-subtitles`
+> options also permanently delete files. None of these operations move files to
+> the macOS Trash or a Linux desktop trash directory.
 
 FFmpeg always writes to a hidden temporary file first. `vid` verifies that the temporary output is non-empty before moving it into place or removing a source file. Existing outputs are rejected unless `--overwrite` is present.
 
 ## Subtitle handling modes
 
-The media conversion commands expose `--subtitles` with one of three values:
+The `remux`, `tag`, and `encode` commands expose `--subtitles` with one of three
+values:
 
 | Value | Text subtitles | Bitmap subtitles |
 | --- | --- | --- |
@@ -200,6 +213,40 @@ Movie_sub5.xsub
 ```
 
 The number is the original FFmpeg stream index. PGS subtitles use `.sup`; DVD and DVB subtitles use `.sub`; XSUB subtitles use `.xsub`.
+
+## `vid convert`
+
+Converts one media file or recursively converts an `avi`, `mkv`, `mov`, or
+`mp4` directory tree to Apple-compatible MP4 files. Each source is replaced only
+after its output has been staged successfully. An existing destination MP4 is
+overwritten.
+
+```sh
+vid convert Movie.mkv
+vid convert ~/Media/Library
+vid convert Movie.mkv --video-codec h264
+```
+
+`--video-codec` controls re-encoding when the existing video cannot be copied.
+The default `h265` mode copies HEVC and encodes other video with `libx265`.
+The `h264` mode copies H.264 and HEVC and encodes other video with `libx264`.
+Both modes use CRF 18 and the `veryslow` encoder preset.
+
+AAC and E-AC-3 audio are copied. Other mono and stereo audio is encoded as AAC
+at 192 kb/s; audio with more than two channels is encoded as E-AC-3 at 640 kb/s.
+One preferred text subtitle is embedded, remaining text subtitles become SRT
+sidecars, and bitmap subtitles are extracted beside the output. Matching
+external text subtitle files are included in the selection.
+
+Options specific to `convert`:
+
+| Option | Default | Behavior |
+| --- | --- | --- |
+| `--video-codec` (`h264` or `h265`) | `h265` | Select the codec used when video must be re-encoded |
+
+Unlike the other media commands, `convert` has fixed recursive discovery,
+replacement, output, audio, and subtitle policies. It does not accept the shared
+output or subtitle-handling options.
 
 ## `vid remux`
 
@@ -348,6 +395,7 @@ The generated help is the authoritative option reference:
 
 ```sh
 vid --help
+vid convert --help
 vid remux --help
 vid tag --help
 vid encode --help
