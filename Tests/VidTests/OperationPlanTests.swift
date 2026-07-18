@@ -24,7 +24,7 @@ struct OperationPlanTests {
         #expect(execution.ffmpegArguments.containsSequence(["-c:a", "aac", "-b:a", "192k"]))
         #expect(execution.ffmpegArguments.contains("-sn"))
         #expect(!execution.ffmpegArguments.contains("hvc1"))
-        #expect(execution.bitmapSubtitlesToExtract.isEmpty)
+        #expect(execution.subtitleExtractions.isEmpty)
     }
 
     @Test("Encoding keeps untagged audio and handles empty dispositions")
@@ -91,7 +91,7 @@ struct OperationPlanTests {
         #expect(execution.ffmpegArguments.containsSequence(["-map", "0:1?"]))
         #expect(!execution.ffmpegArguments.containsSequence(["-map", "0:2?"]))
         #expect(execution.ffmpegArguments.containsSequence(["-vf", "yadif,format=yuv420p"]))
-        #expect(execution.bitmapSubtitlesToExtract.isEmpty)
+        #expect(execution.subtitleExtractions.isEmpty)
     }
 
     @Test("Adding subtitles maps metadata and tags only HEVC video")
@@ -114,7 +114,7 @@ struct OperationPlanTests {
             ]))
         #expect(hevcExecution.ffmpegArguments.containsSequence(["-tag:v:0", "hvc1"]))
         #expect(hevcExecution.ffmpegArguments.containsSequence(["-tag:a:0", "ec-3"]))
-        #expect(hevcExecution.bitmapSubtitlesToExtract.map(\.index) == [3])
+        #expect(hevcExecution.subtitleExtractions.map(\.stream.index) == [3])
 
         let h264Execution = try hevc.makeExecutionPlan(
             input: input,

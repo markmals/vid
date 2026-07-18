@@ -88,7 +88,7 @@ struct MediaProcessorTests {
                 for argument do output="$argument"; done
                 printf 'partial' > "$output"
                 case "$output" in
-                    *.partial.mp4) exit 9 ;;
+                    *.mp4) exit 9 ;;
                 esac
                 """,
         )

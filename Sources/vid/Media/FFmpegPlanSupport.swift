@@ -76,6 +76,23 @@ enum FFmpegPlanSupport {
         }
     }
 
+    /// Builds sidecar extraction plans for bitmap subtitle streams.
+    static func bitmapSubtitleExtractions(
+        in probe: MediaProbe,
+        handling: SubtitleHandling,
+        input: URL
+    ) -> [SubtitleExtractionPlan] {
+        let baseName = input.deletingPathExtension().lastPathComponent
+        return bitmapSubtitles(in: probe, handling: handling).map { stream in
+            SubtitleExtractionPlan(
+                inputURL: input,
+                stream: stream,
+                outputFilename: "\(baseName)_sub\(stream.index).\(stream.subtitleFileExtension)",
+                encoding: .copy
+            )
+        }
+    }
+
     /// Appends the `-map` selectors for the chosen streams to the arguments.
     ///
     /// The video stream is mapped as required, while each audio and subtitle

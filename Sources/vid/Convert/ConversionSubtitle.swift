@@ -30,6 +30,84 @@ struct ExternalSubtitle: Equatable, Sendable {
 struct ExternalSubtitleDiscovery: Sendable {
     /// Finds matching text subtitle sidecars in the video's directory.
     func subtitles(matching video: URL) throws -> [ExternalSubtitle] {
-        fatalError("Not Implemented")
+        let directory = video.deletingLastPathComponent()
+        let videoBaseName = video.deletingPathExtension().lastPathComponent
+        let normalizedBaseName = videoBaseName.lowercased()
+        let candidates = try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )
+
+        return try candidates.compactMap { candidate in
+            let values = try candidate.resourceValues(forKeys: [.isRegularFileKey])
+            guard values.isRegularFile == true,
+                Self.supportedExtensions.contains(candidate.pathExtension.lowercased())
+            else {
+                return nil
+            }
+
+            let candidateBaseName = candidate.deletingPathExtension().lastPathComponent
+            let normalizedCandidateBaseName = candidateBaseName.lowercased()
+            guard
+                normalizedCandidateBaseName == normalizedBaseName
+                    || normalizedCandidateBaseName.hasPrefix("\(normalizedBaseName).")
+            else {
+                return nil
+            }
+
+            let qualifiers = Self.qualifiers(
+                candidateBaseName: normalizedCandidateBaseName,
+                videoBaseName: normalizedBaseName
+            )
+            return ExternalSubtitle(
+                url: candidate.standardizedFileURL,
+                language: Self.language(in: qualifiers),
+                role: Self.role(in: qualifiers)
+            )
+        }.sorted {
+            $0.url.path.localizedStandardCompare($1.url.path) == .orderedAscending
+        }
     }
+
+    private static func qualifiers(
+        candidateBaseName: String,
+        videoBaseName: String
+    ) -> [Substring] {
+        guard candidateBaseName.count > videoBaseName.count else {
+            return []
+        }
+        return candidateBaseName.dropFirst(videoBaseName.count + 1).split(separator: ".")
+    }
+
+    private static func language(in qualifiers: [Substring]) -> String? {
+        qualifiers.lazy
+            .map(String.init)
+            .first { qualifier in
+                (2...3).contains(qualifier.count)
+                    && qualifier.allSatisfy(\.isLetter)
+                    && !roleMarkers.contains(qualifier)
+            }
+    }
+
+    private static func role(in qualifiers: [Substring]) -> ConversionSubtitleRole {
+        let markers = Set(qualifiers.map(String.init))
+        if markers.contains("forced") || markers.contains("foreign") {
+            return .forced
+        }
+        if markers.contains("default") {
+            return .defaultTrack
+        }
+        if !markers.isDisjoint(with: ["sdh", "cc", "hi", "hearing-impaired"]) {
+            return .sdh
+        }
+        return .unspecified
+    }
+
+    private static let roleMarkers: Set<String> = [
+        "cc", "default", "forced", "foreign", "hearing-impaired", "hi", "sdh",
+    ]
+    private static let supportedExtensions: Set<String> = [
+        "srt", "sub", "ttxt", "txt", "vtt",
+    ]
 }

@@ -34,7 +34,7 @@ struct MediaPlanTests {
         #expect(executionPlan.ffmpegArguments.containsSequence(["-tag:a:0", "ec-3"]))
         #expect(executionPlan.ffmpegArguments.containsSequence(["-map", "0:2?"]))
         #expect(!executionPlan.ffmpegArguments.containsSequence(["-map", "0:3?"]))
-        #expect(executionPlan.bitmapSubtitlesToExtract.map(\.index) == [3])
+        #expect(executionPlan.subtitleExtractions.map(\.stream.index) == [3])
     }
 
     @Test("HEVC encoding excludes selected audio languages and normalizes defaults")
@@ -81,7 +81,7 @@ struct MediaPlanTests {
             codecName: codec,
             codecType: type,
             disposition: nil,
-            tags: language.map(MediaStream.Tags.init(language:)),
+            tags: language.map { MediaStream.Tags(language: $0) },
         )
     }
 }

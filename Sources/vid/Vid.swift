@@ -9,6 +9,7 @@ struct Vid: AsyncParsableCommand {
         abstract: "Convert and organize media with FFmpeg.",
         version: "0.1.0",
         subcommands: [
+            ConvertCommand.self,
             RemuxCommand.self,
             TagCommand.self,
             EncodeCommand.self,

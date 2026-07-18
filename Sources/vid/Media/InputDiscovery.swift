@@ -11,11 +11,15 @@ struct InputDiscovery: Sendable {
     /// - Parameters:
     ///   - paths: The raw file or directory paths to search.
     ///   - recursive: Whether directory paths are searched recursively.
-    /// - Returns: The discovered media file URLs, sorted ascending by path using
-    ///   a localized standard comparison.
+    ///   - supportedExtensions: Lowercased extensions accepted as media.
+    /// - Returns: The discovered media file URLs, sorted ascending by path.
     /// - Throws: ``VidError/fileDoesNotExist(path:)`` if a supplied path does not
-    ///   exist, or ``VidError/noInputFiles`` if no media files are found.
-    func mediaFiles(at paths: [String], recursive: Bool) throws -> [URL] {
+    ///   exist, or ``VidError/noInputFiles`` if no supported files are found.
+    func mediaFiles(
+        at paths: [String],
+        recursive: Bool,
+        supportedExtensions: Set<String> = Self.mediaExtensions,
+    ) throws -> [URL] {
         var filesByPath: [String: URL] = [:]
 
         for path in paths {
@@ -27,10 +31,14 @@ struct InputDiscovery: Sendable {
             }
 
             if isDirectory.boolValue {
-                for file in try files(in: input, recursive: recursive) {
+                for file in try files(
+                    in: input,
+                    recursive: recursive,
+                    supportedExtensions: supportedExtensions
+                ) {
                     filesByPath[file.path] = file
                 }
-            } else {
+            } else if supportedExtensions.contains(input.pathExtension.lowercased()) {
                 filesByPath[input.path] = input
             }
         }
@@ -44,7 +52,11 @@ struct InputDiscovery: Sendable {
         return files
     }
 
-    private func files(in directory: URL, recursive: Bool) throws -> [URL] {
+    private func files(
+        in directory: URL,
+        recursive: Bool,
+        supportedExtensions: Set<String>,
+    ) throws -> [URL] {
         let resourceKeys: Set<URLResourceKey> = [.isRegularFileKey]
         let options: FileManager.DirectoryEnumerationOptions =
             recursive
@@ -62,7 +74,7 @@ struct InputDiscovery: Sendable {
         for case let file as URL in enumerator {
             let resourceValues = try file.resourceValues(forKeys: resourceKeys)
             guard resourceValues.isRegularFile == true,
-                Self.mediaExtensions.contains(file.pathExtension.lowercased())
+                supportedExtensions.contains(file.pathExtension.lowercased())
             else {
                 continue
             }

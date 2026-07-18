@@ -17,6 +17,12 @@ struct ConvertCommand: AsyncParsableCommand {
     var videoCodec: ConversionVideoCodec = .h265
 
     mutating func run() async throws {
-        fatalError("Not Implemented")
+        let progressReporter = TerminalConversionProgressReporter()
+        let converter = MediaConverter(
+            reportProgress: { progress in
+                await progressReporter.report(progress)
+            }
+        )
+        _ = try await converter.convert(path: path, videoCodec: videoCodec)
     }
 }

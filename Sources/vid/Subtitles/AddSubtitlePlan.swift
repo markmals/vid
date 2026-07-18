@@ -72,7 +72,11 @@ struct AddSubtitlePlan: MediaOperationPlan {
 
         return FFmpegExecutionPlan(
             ffmpegArguments: arguments,
-            bitmapSubtitlesToExtract: probe.bitmapSubtitleStreams,
+            subtitleExtractions: FFmpegPlanSupport.bitmapSubtitleExtractions(
+                in: probe,
+                handling: .extractBitmap,
+                input: input
+            )
         )
     }
 }

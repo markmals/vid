@@ -49,7 +49,7 @@ struct RepairPlan: MediaOperationPlan {
 
         return FFmpegExecutionPlan(
             ffmpegArguments: arguments,
-            bitmapSubtitlesToExtract: [],
+            subtitleExtractions: []
         )
     }
 }

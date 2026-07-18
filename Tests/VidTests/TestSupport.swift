@@ -32,8 +32,8 @@ func mediaStream(
         index: index,
         codecName: codec,
         codecType: type,
-        disposition: attachedPicture.map(MediaStream.Disposition.init(attachedPicture:)),
-        tags: language.map(MediaStream.Tags.init(language:)),
+        disposition: attachedPicture.map { MediaStream.Disposition(attachedPicture: $0) },
+        tags: language.map { MediaStream.Tags(language: $0) },
     )
 }
 

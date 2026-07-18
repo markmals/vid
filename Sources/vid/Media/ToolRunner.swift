@@ -80,6 +80,62 @@ struct ToolRunner: Sendable {
             )
         }
     }
+
+    /// Runs FFmpeg while decoding its machine-readable progress stream.
+    func runFFmpeg(
+        arguments: [String],
+        durationSeconds: Double?,
+        onProgress: @escaping @Sendable (Double) async -> Void,
+    ) async throws {
+        let progressArguments = ["-progress", "pipe:1", "-nostats"] + arguments
+        print(CommandPreview.render(tool: "ffmpeg", arguments: progressArguments))
+        await onProgress(0)
+
+        let execution = try await Subprocess.run(
+            executable(for: "ffmpeg"),
+            arguments: Arguments(progressArguments),
+            input: .none,
+            output: .sequence,
+            error: .currentStandardError
+        ) { execution in
+            for try await line in execution.standardOutput.strings() {
+                guard
+                    let fraction = Self.progressFraction(
+                        line: line,
+                        durationSeconds: durationSeconds
+                    )
+                else {
+                    continue
+                }
+                await onProgress(fraction)
+            }
+        }
+
+        guard execution.terminationStatus.isSuccess else {
+            throw VidError.processFailed(
+                tool: "ffmpeg",
+                status: execution.terminationStatus.description,
+                diagnostic: nil
+            )
+        }
+        await onProgress(1)
+    }
+
+    private static func progressFraction(
+        line: String,
+        durationSeconds: Double?
+    ) -> Double? {
+        if line == "progress=end" {
+            return 1
+        }
+        guard line.hasPrefix("out_time_us="),
+            let durationSeconds,
+            let microseconds = Double(line.dropFirst("out_time_us=".count))
+        else {
+            return nil
+        }
+        return min(max(microseconds / 1_000_000 / durationSeconds, 0), 1)
+    }
     private func executable(for tool: String) -> Executable {
         guard let path = executablePaths[tool] else {
             return .name(tool)

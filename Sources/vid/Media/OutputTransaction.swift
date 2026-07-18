@@ -26,35 +26,27 @@ struct OutputTransaction: Sendable {
     let finalURL: URL
     /// The standardized source file the operation reads from.
     let sourceURL: URL
-    /// The temporary file the operation writes to before commit.
+    /// The temporary file the operation writes before commit.
     let temporaryURL: URL
+    /// The private directory containing every intermediate artifact.
+    let temporaryDirectoryURL: URL
 
+    private let backupURL: URL
     private let shouldRemoveSource: Bool
 
-    /// Resolves the final and temporary output locations for a source file.
-    ///
-    /// - Parameters:
-    ///   - sourceURL: The source media file being processed.
-    ///   - outputFilenameSuffix: The suffix inserted before the extension when
-    ///     the default `.mp4` output would collide with the source.
-    ///   - policy: The resolved output behavior controlling directory,
-    ///     overwrite, removal, and in-place replacement.
-    /// - Throws: ``VidError/incompatibleOutputOptions(reason:)`` when in-place
-    ///   replacement is combined with an output directory;
-    ///   ``VidError/invalidOutputDirectory(path:)`` when the output directory
-    ///   does not exist; ``VidError/outputExists(path:)`` when the destination
-    ///   already exists and overwriting is not permitted.
+    /// Resolves the final output and creates an isolated temporary directory.
     init(
         sourceURL: URL,
         outputFilenameSuffix: String,
         policy: OutputPolicy,
+        temporaryDirectoryRoot: URL = FileManager.default.temporaryDirectory,
     ) throws {
         if let outputDirectory = policy.outputDirectory {
             var isDirectory: ObjCBool = false
             guard
                 FileManager.default.fileExists(
                     atPath: outputDirectory.path,
-                    isDirectory: &isDirectory,
+                    isDirectory: &isDirectory
                 ),
                 isDirectory.boolValue
             else {
@@ -71,13 +63,13 @@ struct OutputTransaction: Sendable {
         if policy.shouldReplaceInput {
             guard policy.outputDirectory == nil else {
                 throw VidError.incompatibleOutputOptions(
-                    reason: "--replace cannot be combined with --output-directory.",
+                    reason: "--replace cannot be combined with --output-directory."
                 )
             }
             finalURL = mp4URL
         } else if mp4URL.standardizedFileURL == standardizedSourceURL {
             finalURL = destinationDirectory.appendingPathComponent(
-                "\(baseName).\(outputFilenameSuffix).mp4",
+                "\(baseName).\(outputFilenameSuffix).mp4"
             )
         } else {
             finalURL = mp4URL
@@ -90,47 +82,64 @@ struct OutputTransaction: Sendable {
             throw VidError.outputExists(path: finalURL.path)
         }
 
-        let temporaryName = ".\(baseName).vid-\(UUID().uuidString).partial.mp4"
-        temporaryURL = destinationDirectory.appendingPathComponent(temporaryName)
+        try FileManager.default.createDirectory(
+            at: temporaryDirectoryRoot,
+            withIntermediateDirectories: true
+        )
+        temporaryDirectoryURL = temporaryDirectoryRoot.appendingPathComponent(
+            "vid-\(UUID().uuidString)",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(
+            at: temporaryDirectoryURL,
+            withIntermediateDirectories: false
+        )
+        temporaryURL = temporaryDirectoryURL.appendingPathComponent("output.mp4")
+        backupURL = temporaryDirectoryURL.appendingPathComponent("replaced-output.mp4")
         shouldRemoveSource = policy.shouldRemoveSource || policy.shouldReplaceInput
         self.sourceURL = standardizedSourceURL
     }
 
-    /// Promotes the temporary output to its final location and, when requested,
-    /// removes the source file.
-    ///
-    /// The temporary file replaces any existing file at the destination, or is
-    /// moved into place when none exists. The source is removed only when the
-    /// policy requested removal, the source differs from the destination, and
-    /// the source still exists.
-    ///
-    /// - Throws: ``VidError/emptyOutput(path:)`` when the temporary output is
-    ///   empty, or a filesystem error if the move, replace, or removal fails.
+    /// Promotes the validated output and removes the source only after promotion.
     func commit() throws {
         try ensureNonEmptyOutput()
-
         let fileManager = FileManager.default
-        if fileManager.fileExists(atPath: finalURL.path) {
+
+        if finalURL == sourceURL {
             _ = try fileManager.replaceItemAt(finalURL, withItemAt: temporaryURL)
-        } else {
-            try fileManager.moveItem(at: temporaryURL, to: finalURL)
-        }
-
-        if shouldRemoveSource, sourceURL != finalURL,
-            fileManager.fileExists(atPath: sourceURL.path)
-        {
-            try fileManager.removeItem(at: sourceURL)
-        }
-    }
-
-    /// Deletes the temporary output file if it exists, discarding an abandoned
-    /// operation. Any removal failure is ignored.
-    func discardTemporaryOutput() {
-        guard FileManager.default.fileExists(atPath: temporaryURL.path) else {
+            discardTemporaryOutput()
             return
         }
 
-        try? FileManager.default.removeItem(at: temporaryURL)
+        let replacedExistingOutput = fileManager.fileExists(atPath: finalURL.path)
+        if replacedExistingOutput {
+            try fileManager.moveItem(at: finalURL, to: backupURL)
+        }
+
+        do {
+            try fileManager.moveItem(at: temporaryURL, to: finalURL)
+            if shouldRemoveSource, fileManager.fileExists(atPath: sourceURL.path) {
+                try fileManager.removeItem(at: sourceURL)
+            }
+        } catch {
+            if fileManager.fileExists(atPath: finalURL.path) {
+                try? fileManager.removeItem(at: finalURL)
+            }
+            if replacedExistingOutput, fileManager.fileExists(atPath: backupURL.path) {
+                try? fileManager.moveItem(at: backupURL, to: finalURL)
+            }
+            throw error
+        }
+
+        discardTemporaryOutput()
+    }
+
+    /// Deletes the complete temporary workspace if it still exists.
+    func discardTemporaryOutput() {
+        guard FileManager.default.fileExists(atPath: temporaryDirectoryURL.path) else {
+            return
+        }
+        try? FileManager.default.removeItem(at: temporaryDirectoryURL)
     }
 
     private func ensureNonEmptyOutput() throws {

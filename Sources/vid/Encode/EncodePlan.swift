@@ -74,10 +74,11 @@ struct EncodePlan: MediaOperationPlan {
         arguments += ["-movflags", "+faststart", output.path]
         return FFmpegExecutionPlan(
             ffmpegArguments: arguments,
-            bitmapSubtitlesToExtract: FFmpegPlanSupport.bitmapSubtitles(
+            subtitleExtractions: FFmpegPlanSupport.bitmapSubtitleExtractions(
                 in: probe,
                 handling: settings.subtitleHandling,
-            ),
+                input: input
+            )
         )
     }
 

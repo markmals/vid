@@ -3,36 +3,56 @@ import Foundation
 /// A decoded summary of the streams contained in a media file, as reported by
 /// ffprobe.
 struct MediaProbe: Decodable, Sendable {
+    /// Container-level metadata reported for the media file.
+    struct Format: Decodable, Sendable {
+        /// Duration in seconds, represented by ffprobe as a decimal string.
+        let duration: String?
+    }
+
     /// All streams reported for the media file, in ffprobe's order.
     let streams: [MediaStream]
+    /// Container-level metadata reported by ffprobe.
+    let format: Format?
+
+    /// Creates a probe from known streams and optional container metadata.
+    init(streams: [MediaStream], format: Format? = nil) {
+        self.streams = streams
+        self.format = format
+    }
 
     /// The audio streams contained in the media file.
-    /// - Complexity: O(n), where n is the number of streams.
     var audioStreams: [MediaStream] {
         streams.filter { $0.codecType == "audio" }
     }
 
-    /// The subtitle streams encoded as bitmap (image-based) subtitles.
-    /// - Complexity: O(n), where n is the number of streams.
+    /// The subtitle streams encoded as bitmap subtitles.
     var bitmapSubtitleStreams: [MediaStream] {
         subtitleStreams.filter(\.isBitmapSubtitle)
     }
 
-    /// The first genuine video stream, excluding attached-picture (cover art)
-    /// streams, or `nil` if the file has none.
-    /// - Complexity: O(n), where n is the number of streams.
+    /// Duration in seconds, when ffprobe supplied a finite positive value.
+    var durationSeconds: Double? {
+        guard let duration = format?.duration,
+            let seconds = Double(duration),
+            seconds.isFinite,
+            seconds > 0
+        else {
+            return nil
+        }
+        return seconds
+    }
+
+    /// The first genuine video stream, excluding attached cover art.
     var firstVideoStream: MediaStream? {
         streams.first { $0.codecType == "video" && $0.disposition?.attachedPicture != 1 }
     }
 
     /// The subtitle streams contained in the media file.
-    /// - Complexity: O(n), where n is the number of streams.
     var subtitleStreams: [MediaStream] {
         streams.filter { $0.codecType == "subtitle" }
     }
 
-    /// The subtitle streams encoded as text (non-bitmap) subtitles.
-    /// - Complexity: O(n), where n is the number of streams.
+    /// The subtitle streams encoded as text.
     var textSubtitleStreams: [MediaStream] {
         subtitleStreams.filter { !$0.isBitmapSubtitle }
     }
@@ -42,50 +62,95 @@ struct MediaProbe: Decodable, Sendable {
 struct MediaStream: Decodable, Sendable {
     /// The disposition flags describing a stream's role.
     struct Disposition: Decodable, Sendable {
-        /// Whether the stream is an attached picture (cover art); `1` when set.
+        /// Whether the stream is an attached picture.
         let attachedPicture: Int?
+        /// Whether the stream is the source's default track.
+        let isDefault: Int?
+        /// Whether the stream contains forced subtitles.
+        let isForced: Int?
+        /// Whether the stream serves deaf and hard-of-hearing viewers.
+        let isHearingImpaired: Int?
 
-        /// Maps disposition properties to ffprobe's JSON keys.
+        init(
+            attachedPicture: Int? = nil,
+            isDefault: Int? = nil,
+            isForced: Int? = nil,
+            isHearingImpaired: Int? = nil,
+        ) {
+            self.attachedPicture = attachedPicture
+            self.isDefault = isDefault
+            self.isForced = isForced
+            self.isHearingImpaired = isHearingImpaired
+        }
+
         enum CodingKeys: String, CodingKey {
-            /// The `attached_pic` disposition flag.
             case attachedPicture = "attached_pic"
+            case isDefault = "default"
+            case isForced = "forced"
+            case isHearingImpaired = "hearing_impaired"
         }
     }
 
     /// The metadata tags attached to a stream.
     struct Tags: Decodable, Sendable {
-        /// The stream's language tag, if present (e.g. `"eng"`).
+        /// The stream's language tag.
         let language: String?
+        /// The stream's human-readable title.
+        let title: String?
+
+        init(language: String? = nil, title: String? = nil) {
+            self.language = language
+            self.title = title
+        }
     }
 
     /// The stream's index within the media file.
     let index: Int
-    /// The name of the codec used by the stream, if reported.
+    /// The name of the codec used by the stream.
     let codecName: String?
-    /// The stream's media type, such as `"video"`, `"audio"`, or `"subtitle"`.
+    /// The MP4 codec tag reported for the stream.
+    let codecTagString: String?
+    /// The stream's media type.
     let codecType: String?
-    /// The stream's disposition flags, if reported.
+    /// The number of audio channels.
+    let channels: Int?
+    /// The stream's disposition flags.
     let disposition: Disposition?
-    /// The stream's metadata tags, if reported.
+    /// The stream's metadata tags.
     let tags: Tags?
 
-    /// Whether the stream is a bitmap (image-based) subtitle.
+    init(
+        index: Int,
+        codecName: String?,
+        codecType: String?,
+        disposition: Disposition?,
+        tags: Tags?,
+        codecTagString: String? = nil,
+        channels: Int? = nil,
+    ) {
+        self.index = index
+        self.codecName = codecName
+        self.codecTagString = codecTagString
+        self.codecType = codecType
+        self.channels = channels
+        self.disposition = disposition
+        self.tags = tags
+    }
+
+    /// Whether the stream is a bitmap subtitle.
     var isBitmapSubtitle: Bool {
         guard let codecName else {
             return false
         }
-
         return Self.bitmapSubtitleCodecs.contains(codecName)
     }
 
-    /// The stream's language code, lowercased, or `nil` if untagged.
-    /// - Complexity: O(n), where n is the length of the language code.
+    /// The stream's language code, lowercased.
     var language: String? {
         tags?.language?.lowercased()
     }
 
-    /// The file extension to use when extracting this subtitle stream to a
-    /// sidecar file.
+    /// The file extension used when extracting this subtitle stream.
     var subtitleFileExtension: String {
         switch codecName {
         case "hdmv_pgs_subtitle": "sup"
@@ -94,17 +159,13 @@ struct MediaStream: Decodable, Sendable {
         }
     }
 
-    /// Maps stream properties to ffprobe's JSON keys.
     enum CodingKeys: String, CodingKey {
-        /// The `codec_name` field.
+        case channels
         case codecName = "codec_name"
-        /// The `codec_type` field.
+        case codecTagString = "codec_tag_string"
         case codecType = "codec_type"
-        /// The `disposition` field.
         case disposition
-        /// The `index` field.
         case index
-        /// The `tags` field.
         case tags
     }
 
@@ -143,7 +204,7 @@ struct MediaProber: Sendable {
             arguments: [
                 "-v", "error",
                 "-show_entries",
-                "stream=index,codec_name,codec_type,disposition:stream_tags=language",
+                "format=duration:stream=index,codec_name,codec_tag_string,codec_type,channels,disposition:stream_tags=language,title",
                 "-of", "json",
                 file.path,
             ],
