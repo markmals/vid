@@ -1,6 +1,6 @@
 # Contributor Guidelines
 
-Be sure to read all the documents in `./.agents/rules` before beginning a session.
+Be sure to read all the documents in `./.agents/rules/*.md` before beginning a session.
 
 ## Project Brief
 
